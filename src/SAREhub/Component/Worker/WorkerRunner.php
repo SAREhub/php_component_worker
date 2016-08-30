@@ -45,13 +45,13 @@ class WorkerRunner {
 	protected function processCommand(WorkerCommand $command) {
 		switch ($command->getName()) {
 			case StandardWorkerCommands::STOP_COMMAND_NAME:
-				$this->stop($command->getParameters());
+				$this->stop();
 				break;
 		}
 	}
 	
-	public function stop(array $parameters) {
-		$this->worker->onStop($parameters);
+	public function stop() {
+		$this->worker->onStop();
 		$this->running = false;
 	}
 	

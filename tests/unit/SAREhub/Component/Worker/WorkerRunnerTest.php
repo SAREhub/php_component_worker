@@ -42,7 +42,7 @@ class WorkerRunnerTest extends TestCase {
 	public function testStop() {
 		$this->workerMock->expects($this->once())->method('onStop');
 		$this->workerRunner->start();
-		$this->workerRunner->stop([]);
+		$this->workerRunner->stop();
 		$this->assertFalse($this->workerRunner->isRunning());
 	}
 	
@@ -50,7 +50,6 @@ class WorkerRunnerTest extends TestCase {
 		$this->workerMock->expects($this->once())->method('onStop');
 		$stopWorkerCommand = $this->getMockBuilder(WorkerCommand::class)->disableOriginalConstructor()->getMock();
 		$stopWorkerCommand->method('getName')->willReturn(StandardWorkerCommands::STOP_COMMAND_NAME);
-		$stopWorkerCommand->method('getParameters')->willReturn([]);
 		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn($stopWorkerCommand);
 		
 		$this->workerRunner->start();

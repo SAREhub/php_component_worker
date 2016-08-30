@@ -21,5 +21,5 @@ interface Worker {
 	 * Executed when worker was stopped.
 	 * @param array $parameters Optional array with parameters.
 	 */
-	public function onStop(array $parameters);
+	public function onStop();
 }
