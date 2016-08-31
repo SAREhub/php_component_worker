@@ -4,9 +4,9 @@ namespace SAREhub\Component\Worker;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
+use SAREhub\Component\Worker\Command\CommandInput;
+use SAREhub\Component\Worker\Command\Standard\StopWorkerCommand;
 use SAREhub\Component\Worker\Command\StandardWorkerCommands;
-use SAREhub\Component\Worker\Command\WorkerCommand;
-use SAREhub\Component\Worker\Command\WorkerCommandInput;
 
 class WorkerRunnerTest extends TestCase {
 	
@@ -21,7 +21,7 @@ class WorkerRunnerTest extends TestCase {
 	
 	protected function setUp() {
 		$this->workerMock = $this->getMockBuilder(Worker::class)->getMock();
-		$this->commandInputMock = $this->getMockBuilder(WorkerCommandInput::class)->getMock();
+		$this->commandInputMock = $this->getMockBuilder(CommandInput::class)->getMock();
 		$this->workerRunner = new WorkerRunner($this->workerMock, $this->commandInputMock);
 	}
 	
@@ -48,8 +48,7 @@ class WorkerRunnerTest extends TestCase {
 	
 	public function testProcessStopCommand() {
 		$this->workerMock->expects($this->once())->method('onStop');
-		$stopWorkerCommand = $this->getMockBuilder(WorkerCommand::class)->disableOriginalConstructor()->getMock();
-		$stopWorkerCommand->method('getName')->willReturn(StandardWorkerCommands::STOP_COMMAND_NAME);
+		$stopWorkerCommand = $this->getMockBuilder(StopWorkerCommand::class)->disableOriginalConstructor()->getMock();
 		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn($stopWorkerCommand);
 		
 		$this->workerRunner->start();

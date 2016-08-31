@@ -19,7 +19,11 @@ interface Worker {
 	
 	/**
 	 * Executed when worker was stopped.
-	 * @param array $parameters Optional array with parameters.
 	 */
 	public function onStop();
+	
+	/**
+	 * @return string
+	 */
+	public function getUuid();
 }
