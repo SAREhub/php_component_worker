@@ -2,16 +2,18 @@
 
 namespace SAREhub\Component\Worker\Command;
 
-interface WorkerCommandInput {
+interface CommandInput {
 	
 	/**
 	 * Gets next command from input or returns null when no command.
-	 * @return WorkerCommand|null
+	 * @return Command|null
 	 */
 	public function getNextCommand();
 	
 	/**
-	 * Sends ack. for processed command.
+	 * Sends reply for processed command
+	 * @param string $reply
+	 * @return
 	 */
-	public function sendCommandConfirmation();
+	public function sendCommandReply($reply);
 }

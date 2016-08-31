@@ -9,13 +9,24 @@ class ProcessStreamWorkerCommandInputTest extends TestCase {
 	private $inStream;
 	private $outStream;
 	
-	/** @var ProcessStreamWorkerCommandInput */
+	/** @var PHPUnit_Framework_MockObject_MockObject */
+	private $commandMock;
+	
+	/** @var PHPUnit_Framework_MockObject_MockObject */
+	private $commandDeserializerMock;
+	
+	/** @var ProcessStreamCommandInput */
 	private $commandInput;
 	
 	protected function setUp() {
+		$this->commandMock = $this->getMockBuilder(WorkerCommand::class)->getMock();
+		$this->commandDeserializerMock = $this->getMockBuilder(\stdClass::class)->setMethods(['__invoke'])->getMock();
+		$this->commandDeserializerMock->method('__invoke')->willReturn($this->commandMock);
+		
 		$this->inStream = fopen("php://memory", 'w+');
 		$this->outStream = fopen("php://memory", 'w+');
-		$this->commandInput = new ProcessStreamWorkerCommandInput($this->inStream, $this->outStream);
+		$this->commandInput = new ProcessStreamCommandInput($this->inStream, $this->outStream, $this->commandDeserializerMock);
+		
 	}
 	
 	public function testGetNextCommandWhenNoCommandSent() {
@@ -23,16 +34,14 @@ class ProcessStreamWorkerCommandInputTest extends TestCase {
 	}
 	
 	public function testGetNextCommand() {
-		$commandParameters = ['testParam' => 1];
-		fwrite($this->inStream, json_encode([
-			'name' => 'test',
-			'parameters' => $commandParameters
-		  ])."\n");
+		$commandJson = 'testJson';
+		$this->commandDeserializerMock->expects($this->once())
+		  ->method('__invoke')
+		  ->with($commandJson)
+		  ->willReturn($this->commandMock);
 		
+		fwrite($this->inStream, $commandJson."\n");
 		fseek($this->inStream, 0);
-		$command = $this->commandInput->getNextCommand();
-		$this->assertInstanceOf(WorkerCommand::class, $command);
-		$this->assertEquals('test', $command->getName());
-		$this->assertEquals($commandParameters, $command->getParameters());
+		$this->assertSame($this->commandMock, $this->commandInput->getNextCommand());
 	}
 }

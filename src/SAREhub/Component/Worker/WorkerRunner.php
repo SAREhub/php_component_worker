@@ -2,22 +2,23 @@
 
 namespace SAREhub\Component\Worker;
 
+use SAREhub\Component\Worker\Command\CommandInput;
+use SAREhub\Component\Worker\Command\Standard\StopWorkerCommand;
 use SAREhub\Component\Worker\Command\StandardWorkerCommands;
 use SAREhub\Component\Worker\Command\WorkerCommand;
-use SAREhub\Component\Worker\Command\WorkerCommandInput;
 
 class WorkerRunner {
 	
 	/** @var Worker */
 	protected $worker;
 	
-	/** @var WorkerCommandInput */
+	/** @var CommandInput */
 	protected $commandInput;
 	
 	/** @var bool */
 	protected $running = false;
 	
-	public function __construct(Worker $worker, WorkerCommandInput $commandInput) {
+	public function __construct(Worker $worker, CommandInput $commandInput) {
 		$this->worker = $worker;
 		$this->commandInput = $commandInput;
 	}
@@ -43,10 +44,9 @@ class WorkerRunner {
 	}
 	
 	protected function processCommand(WorkerCommand $command) {
-		switch ($command->getName()) {
-			case StandardWorkerCommands::STOP_COMMAND_NAME:
-				$this->stop();
-				break;
+		if ($command instanceof StopWorkerCommand) {
+			$this->stop();
+			$this->commandInput->sendCommandReply('1');
 		}
 	}
 	

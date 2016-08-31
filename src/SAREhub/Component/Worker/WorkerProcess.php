@@ -2,8 +2,7 @@
 
 namespace SAREhub\Component\Worker;
 
-use SAREhub\Component\Worker\Command\WorkerCommand;
-use SAREhub\Component\Worker\Command\WorkerCommandOutput;
+use SAREhub\Component\Worker\Command\CommandOutput;
 use Symfony\Component\Process\Process;
 
 /**
@@ -14,13 +13,13 @@ class WorkerProcess {
 	/** @var WorkerInfo */
 	protected $workerInfo;
 	
-	/** @var WorkerCommandOutput */
+	/** @var CommandOutput */
 	protected $workerCommandOutput;
 	
 	/** @var Process */
 	protected $process;
 	
-	public function __construct(WorkerInfo $workerInfo, WorkerCommandOutput $workerCommandOutput, Process $process) {
+	public function __construct(WorkerInfo $workerInfo, CommandOutput $workerCommandOutput, Process $process) {
 		$this->workerInfo = $workerInfo;
 		$this->workerCommandOutput = $workerCommandOutput;
 		$this->process = $process;
@@ -34,22 +33,7 @@ class WorkerProcess {
 	}
 	
 	/**
-	 * @param WorkerCommand $command
-	 * @return string
-	 */
-	public function sendCommand(WorkerCommand $command) {
-		$this->workerCommandOutput->sendCommand($command);
-	}
-	
-	/**
-	 * @return string
-	 */
-	public function getLastCommandConfirmation() {
-		return $this->workerCommandOutput->getCommandConfirmation();
-	}
-	
-	/**
-	 * Killing process via signal
+	 * Kills process via signal
 	 */
 	public function kill() {
 		$this->process->stop();
@@ -60,6 +44,13 @@ class WorkerProcess {
 	 */
 	public function getWorkerInfo() {
 		return $this->workerInfo;
+	}
+	
+	/**
+	 * @return CommandOutput
+	 */
+	public function getCommandOutput() {
+		return $this->workerCommandOutput;
 	}
 	
 	/**

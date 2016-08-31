@@ -10,42 +10,51 @@ class ProcessStreamCommandOutputTest extends TestCase {
 	
 	/** @var PHPUnit_Framework_MockObject_MockObject */
 	private $processMock;
+	
+	/** @var \resource */
 	private $processInputStream;
 	
 	/** @var ProcessStreamCommandOutput */
 	private $commandOutput;
 	
+	/** @var PHPUnit_Framework_MockObject_MockObject */
+	private $commandMock;
+	
 	protected function setUp() {
 		$this->processMock = $this->getMockBuilder(Process::class)->disableOriginalConstructor()->getMock();
 		$this->processInputStream = fopen('php://memory', 'w+');
 		$this->processMock->method('getInput')->willReturn($this->processInputStream);
-		$this->commandOutput = new ProcessStreamCommandOutput($this->processMock);
+		
+		$this->commandOutput = new ProcessStreamCommandOutput($this->processMock, function (Command $command) {
+			return json_encode([
+			  'name' => $command->getName()
+			]);
+			
+		});
+		
+		$this->commandMock = $this->getMockBuilder(WorkerCommand::class)->getMock();
+		$this->commandMock->method('getName')->willReturn('command');
 	}
 	
 	
 	public function testSendCommand() {
-		$commandMock = $this->getMockBuilder(WorkerCommand::class)->disableOriginalConstructor()->getMock();
-		$commandMock->expects($this->atLeast(2))->method('jsonSerialize')->willReturn([
-		  'name' => 'test',
-		  'parameters' => []
-		]);
-		
-		$this->commandOutput->sendCommand($commandMock);
+		$this->commandOutput->sendCommand($this->commandMock);
 		fseek($this->processInputStream, 0);
-		$this->assertEquals(json_encode($commandMock), trim(fgets($this->processInputStream)));
+		$this->assertEquals(json_encode(['name' => 'command']), trim(fgets($this->processInputStream)));
 		fclose($this->processInputStream);
 	}
 	
-	public function testGetCommandConfirmation() {
-		$this->processMock->method('getIncrementalOutput')->willReturn("1\ngfdgdf");
-		$this->assertEquals('1', $this->commandOutput->getCommandConfirmation());
+	public function testGetCommandReply() {
+		$this->processMock->method('getIncrementalOutput')->willReturn("###1###");
+		$this->assertEquals('1', $this->commandOutput->getCommandReply());
 		fclose($this->processInputStream);
 	}
 	
-	public function testGetCommandConfirmationForPartialOutputFromProcess() {
-		$this->processMock->method('getIncrementalOutput')->willReturnOnConsecutiveCalls("test1", "\nafter", "after");
-		$this->assertFalse($this->commandOutput->getCommandConfirmation());
-		$this->assertTrue($this->commandOutput->getCommandConfirmation());
+	public function testGetCommandReplyForPartialOutputFromProcess() {
+		$this->processMock->method('getIncrementalOutput')->willReturnOnConsecutiveCalls("test###1", "###\nafter", "after");
+		$this->assertNull($this->commandOutput->getCommandReply());
+		$this->assertEquals('1', $this->commandOutput->getCommandReply());
+		$this->assertNull($this->commandOutput->getCommandReply());
 		fclose($this->processInputStream);
 	}
 	
