@@ -72,10 +72,11 @@ class WorkerProcessFactory {
 	 * @return WorkerProcess
 	 */
 	public function create(WorkerInfo $workerInfo) {
-		$processArguments = array_merge(['php', $this->runnerScript], $this->arguments);
+		$standardArguments = ['php', $this->runnerScript, $workerInfo->uuid];
+		$processArguments = array_merge($standardArguments, $this->arguments);
 		$process = ProcessBuilder::create($processArguments)
 		  ->setWorkingDirectory($this->workingDirectory)
-		  ->add($workerInfo->uuid)->getProcess();
+		  ->getProcess();
 		
 		$commandOutputFactory = $this->commandOutputFactory;
 		return WorkerProcess::getFor($workerInfo, $process)

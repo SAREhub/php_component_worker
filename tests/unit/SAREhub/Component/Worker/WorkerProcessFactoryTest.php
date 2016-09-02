@@ -38,6 +38,7 @@ class WorkerProcessFactoryTest extends TestCase {
 		  ->commandOutputFactory($this->commandOutputFactoryMock);
 		
 		$this->workerInfo = new WorkerInfo();
+		$this->workerInfo->uuid = '123';
 	}
 	
 	public function testCreate() {
@@ -46,7 +47,7 @@ class WorkerProcessFactoryTest extends TestCase {
 		$this->assertSame($this->commandOutputMock, $workerProcess->getCommandOutput());
 		$process = $workerProcess->getProcess();
 		$this->assertInstanceOf(Process::class, $process);
-		$this->assertEquals('"php" "runner.php" ', $process->getCommandLine());
+		$this->assertEquals('"php" "runner.php" "123"', $process->getCommandLine());
 	}
 	
 	public function testCreateWithCustomWorkingDirectory() {
@@ -58,6 +59,6 @@ class WorkerProcessFactoryTest extends TestCase {
 	public function testCreateWithArguments() {
 		$workerProcess = $this->factory->arguments(['arg1', 'arg2'])->create($this->workerInfo);
 		$process = $workerProcess->getProcess();
-		$this->assertEquals('"php" "runner.php" "arg1" "arg2" ', $process->getCommandLine());
+		$this->assertEquals('"php" "runner.php" "123" "arg1" "arg2"', $process->getCommandLine());
 	}
 }
