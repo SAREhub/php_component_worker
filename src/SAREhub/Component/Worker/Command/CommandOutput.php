@@ -2,11 +2,15 @@
 
 namespace SAREhub\Component\Worker\Command;
 
+/**
+ * Represents place for sending commands.
+ */
 interface CommandOutput {
 	
 	/**
 	 * Sends command to output.
 	 * @param Command $command
+	 * @return $this;
 	 */
 	public function sendCommand(Command $command);
 	

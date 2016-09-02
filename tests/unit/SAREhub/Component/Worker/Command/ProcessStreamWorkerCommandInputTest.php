@@ -19,13 +19,14 @@ class ProcessStreamWorkerCommandInputTest extends TestCase {
 	private $commandInput;
 	
 	protected function setUp() {
-		$this->commandMock = $this->getMockBuilder(WorkerCommand::class)->getMock();
+		$this->commandMock = $this->createMock(WorkerCommand::class);
 		$this->commandDeserializerMock = $this->getMockBuilder(\stdClass::class)->setMethods(['__invoke'])->getMock();
 		$this->commandDeserializerMock->method('__invoke')->willReturn($this->commandMock);
 		
 		$this->inStream = fopen("php://memory", 'w+');
 		$this->outStream = fopen("php://memory", 'w+');
-		$this->commandInput = new ProcessStreamCommandInput($this->inStream, $this->outStream, $this->commandDeserializerMock);
+		$this->commandInput = new ProcessStreamCommandInput($this->inStream, $this->outStream);
+		$this->commandInput->deserializer($this->commandDeserializerMock);
 		
 	}
 	

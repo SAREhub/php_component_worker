@@ -2,6 +2,9 @@
 
 namespace SAREhub\Component\Worker\Command;
 
+/**
+ * Represents place from where command can be gets.
+ */
 interface CommandInput {
 	
 	/**
@@ -13,7 +16,7 @@ interface CommandInput {
 	/**
 	 * Sends reply for processed command
 	 * @param string $reply
-	 * @return
+	 * @return $this
 	 */
 	public function sendCommandReply($reply);
 }

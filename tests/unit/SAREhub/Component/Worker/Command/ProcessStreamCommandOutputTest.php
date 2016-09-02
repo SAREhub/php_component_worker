@@ -21,21 +21,20 @@ class ProcessStreamCommandOutputTest extends TestCase {
 	private $commandMock;
 	
 	protected function setUp() {
-		$this->processMock = $this->getMockBuilder(Process::class)->disableOriginalConstructor()->getMock();
+		$this->processMock = $this->createMock(Process::class);
 		$this->processInputStream = fopen('php://memory', 'w+');
 		$this->processMock->method('getInput')->willReturn($this->processInputStream);
 		
-		$this->commandOutput = new ProcessStreamCommandOutput($this->processMock, function (Command $command) {
-			return json_encode([
-			  'name' => $command->getName()
-			]);
-			
-		});
+		$this->commandOutput = ProcessStreamCommandOutput::getForProcess($this->processMock)
+		  ->serializer(function (Command $command) {
+			  return json_encode([
+				'name' => $command->getName()
+			  ]);
+		  });
 		
-		$this->commandMock = $this->getMockBuilder(WorkerCommand::class)->getMock();
+		$this->commandMock = $this->createMock(WorkerCommand::class);
 		$this->commandMock->method('getName')->willReturn('command');
 	}
-	
 	
 	public function testSendCommand() {
 		$this->commandOutput->sendCommand($this->commandMock);

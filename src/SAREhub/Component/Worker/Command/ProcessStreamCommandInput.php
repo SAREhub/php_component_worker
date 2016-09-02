@@ -4,23 +4,42 @@ namespace SAREhub\Component\Worker\Command;
 
 class ProcessStreamCommandInput implements CommandInput {
 	
-	/** @var \resource */
+	const DEFAULT_REPLY_FORMAT = '###%s###';
+	
 	protected $inStream;
-	
-	/** @var \resource */
 	protected $outStream;
+	protected $deserializer;
+	protected $replyFormat;
 	
-	/** @var string */
-	private $replyFormat;
-	
-	/** @var callable */
-	private $deserializer;
-	
-	public function __construct($inStream, $outStream, callable $deserializer, $replyFormat = '###%s###') {
+	public function __construct($inStream, $outStream) {
 		$this->inStream = $inStream;
 		$this->outStream = $outStream;
-		$this->replyFormat = $replyFormat;
+		$this->replyFormat = self::DEFAULT_REPLY_FORMAT;
+	}
+	
+	/**
+	 * @return ProcessStreamCommandInput
+	 */
+	public function getForStdIO() {
+		return new self(STDIN, STDOUT);
+	}
+	
+	/**
+	 * @param callable $deserializer
+	 * @return $this
+	 */
+	public function deserializer(callable $deserializer) {
 		$this->deserializer = $deserializer;
+		return $this;
+	}
+	
+	/**
+	 * @param string $replyFormat
+	 * @return $this
+	 */
+	public function replyFormat($replyFormat) {
+		$this->replyFormat = $replyFormat;
+		return $this;
 	}
 	
 	public function getNextCommand() {
@@ -35,5 +54,7 @@ class ProcessStreamCommandInput implements CommandInput {
 	
 	public function sendCommandReply($reply) {
 		fwrite($this->outStream, sprintf($this->replyFormat, $reply));
+		return $this;
 	}
 }
+

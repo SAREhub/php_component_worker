@@ -4,46 +4,73 @@ namespace SAREhub\Component\Worker\Command;
 
 use Symfony\Component\Process\Process;
 
+/**
+ * Implementation of CommandOutput interface
+ * Command will be send to selected process stdin
+ */
 class ProcessStreamCommandOutput implements CommandOutput {
 	
-	/** @var \resource */
-	protected $processInputStream;
+	const DEFAULT_REPLY_PATTERN = '/###(.+)###/';
 	
-	/** @var Process */
 	protected $process;
+	protected $replyPattern = self::DEFAULT_REPLY_PATTERN;
 	
-	/** @var string */
+	protected $serializer;
+	protected $processInputStream;
 	protected $processOutput = '';
 	
-	/** @var string */
-	private $replyPattern;
-	
-	/**@var callable */
-	private $serializer;
+	/**
+	 * ProcessStreamCommandOutput constructor.
+	 * @param Process $process
+	 */
+	public function __construct(Process $process) {
+		$this->process = $process;
+		$this->processInputStream = $process->getInput();
+		$this->serializer = self::getDefaultSerializer();
+	}
 	
 	/**
 	 * @param Process $process
-	 * @param string $replyPattern Regex pattern for find command reply in process stdout
-	 * @param callable $serializer
+	 * @return ProcessStreamCommandOutput
 	 */
-	public function __construct(Process $process, callable $serializer, $replyPattern = '/###(.+)###/') {
-		$this->processInputStream = $process->getInput();
-		$this->process = $process;
-		$this->replyPattern = $replyPattern;
-		$this->serializer = $serializer;
-	}
-	
-	public function sendCommand(Command $command) {
-		fwrite($this->processInputStream, $this->serializeCommand($command)."\n");
+	public static function getForProcess(Process $process) {
+		return new self($process);
 	}
 	
 	/**
-	 * @param Command $command
-	 * @return mixed
+	 * Returns default implementation of command serializer(using Command::__toString method).
+	 * @return \Closure
 	 */
-	protected function serializeCommand(Command $command) {
+	public static function getDefaultSerializer() {
+		return function (Command $command) {
+			return (string)$command;
+		};
+	}
+	
+	/**
+	 * Function for serialize command to send.
+	 * @param callable $serializer
+	 * @return $this
+	 */
+	public function serializer(callable $serializer) {
+		$this->serializer = $serializer;
+		return $this;
+	}
+	
+	/**
+	 * Regex pattern for find command reply in process output.
+	 * @param string $replyPattern
+	 * @return $this
+	 */
+	public function replyPattern($replyPattern) {
+		$this->replyPattern = $replyPattern;
+		return $this;
+	}
+	
+	public function sendCommand(Command $command) {
 		$serializer = $this->serializer;
-		return $serializer($command);
+		fwrite($this->processInputStream, $serializer($command)."\n");
+		return $this;
 	}
 	
 	public function getCommandReply() {
