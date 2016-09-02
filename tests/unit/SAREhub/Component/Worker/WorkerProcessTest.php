@@ -21,7 +21,8 @@ class WorkerProcessTest extends TestCase {
 	protected function setUp() {
 		$this->processMock = $this->getMockBuilder(Process::class)->disableOriginalConstructor()->getMock();
 		$this->commandOutputMock = $this->getMockBuilder(CommandOutput::class)->getMock();
-		$this->workerProcess = new WorkerProcess(new WorkerInfo(), $this->commandOutputMock, $this->processMock);
+		$this->workerProcess = WorkerProcess::getFor(new WorkerInfo(), $this->processMock)
+		  ->commandOutput($this->commandOutputMock);
 	}
 	
 	public function testStart() {

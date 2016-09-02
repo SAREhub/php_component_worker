@@ -10,20 +10,33 @@ use Symfony\Component\Process\Process;
  */
 class WorkerProcess {
 	
-	/** @var WorkerInfo */
 	protected $workerInfo;
-	
-	/** @var CommandOutput */
-	protected $workerCommandOutput;
-	
-	/** @var Process */
+	protected $commandOutput = null;
 	protected $process;
 	
-	public function __construct(WorkerInfo $workerInfo, CommandOutput $workerCommandOutput, Process $process) {
+	protected function __construct(WorkerInfo $workerInfo, Process $process) {
 		$this->workerInfo = $workerInfo;
-		$this->workerCommandOutput = $workerCommandOutput;
 		$this->process = $process;
 	}
+	
+	/**
+	 * @param WorkerInfo $workerInfo
+	 * @param Process $process
+	 * @return WorkerProcess
+	 */
+	public static function getFor(WorkerInfo $workerInfo, Process $process) {
+		return new self($workerInfo, $process);
+	}
+	
+	/**
+	 * @param CommandOutput $commandOutput
+	 * @return $this
+	 */
+	public function commandOutput(CommandOutput $commandOutput) {
+		$this->commandOutput = $commandOutput;
+		return $this;
+	}
+	
 	
 	/**
 	 * Starts worker process.
@@ -50,7 +63,7 @@ class WorkerProcess {
 	 * @return CommandOutput
 	 */
 	public function getCommandOutput() {
-		return $this->workerCommandOutput;
+		return $this->commandOutput;
 	}
 	
 	/**
@@ -59,6 +72,4 @@ class WorkerProcess {
 	public function getProcess() {
 		return $this->process;
 	}
-	
-	
 }
