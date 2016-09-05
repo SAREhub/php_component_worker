@@ -9,18 +9,17 @@ class ProcessStreamCommandInput implements CommandInput {
 	protected $inStream;
 	protected $outStream;
 	protected $deserializer;
-	protected $replyFormat;
+	protected $replyFormat = self::DEFAULT_REPLY_FORMAT;
 	
 	public function __construct($inStream, $outStream) {
 		$this->inStream = $inStream;
 		$this->outStream = $outStream;
-		$this->replyFormat = self::DEFAULT_REPLY_FORMAT;
 	}
 	
 	/**
 	 * @return ProcessStreamCommandInput
 	 */
-	public function getForStdIO() {
+	public static function getForStdIO() {
 		return new self(STDIN, STDOUT);
 	}
 	
