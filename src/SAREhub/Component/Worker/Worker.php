@@ -1,6 +1,7 @@
 <?php
 
 namespace SAREhub\Component\Worker;
+use SAREhub\Component\Worker\Command\WorkerCommand;
 
 /**
  * Represents Worker instance.
@@ -21,6 +22,13 @@ interface Worker {
 	 * Executed when worker was stopped.
 	 */
 	public function onStop();
+	
+	/**
+	 * Executed when command was received.
+	 * @param WorkerCommand $command
+	 * @return string command reply
+	 */
+	public function onCommand(WorkerCommand $command);
 	
 	/**
 	 * @return string
