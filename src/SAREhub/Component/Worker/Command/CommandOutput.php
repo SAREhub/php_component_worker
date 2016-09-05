@@ -10,7 +10,7 @@ interface CommandOutput {
 	/**
 	 * Sends command to output.
 	 * @param Command $command
-	 * @return $this;
+	 * @return $this
 	 */
 	public function sendCommand(Command $command);
 	
