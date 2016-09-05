@@ -21,7 +21,7 @@ class WorkerProcessFactory {
 	public static function getForRunnerScript($runnerScript) {
 		$factory = new self();
 		$factory->runnerScript = $runnerScript;
-		return $factory;
+		return $factory->commandOutputFactory(self::getDefaultCommandOutputFactory());
 	}
 	
 	/**

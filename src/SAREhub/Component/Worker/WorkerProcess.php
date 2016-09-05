@@ -60,6 +60,13 @@ class WorkerProcess {
 	}
 	
 	/**
+	 * @return string
+	 */
+	public function getWorkerUuid() {
+		return $this->workerInfo->uuid;
+	}
+	
+	/**
 	 * @return CommandOutput
 	 */
 	public function getCommandOutput() {

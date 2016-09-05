@@ -20,9 +20,9 @@ class WorkerRunnerTest extends TestCase {
 	private $workerRunner;
 	
 	protected function setUp() {
-		$this->workerMock = $this->getMockBuilder(Worker::class)->getMock();
-		$this->commandInputMock = $this->getMockBuilder(CommandInput::class)->getMock();
-		$this->workerRunner = new WorkerRunner($this->workerMock, $this->commandInputMock);
+		$this->workerMock = $this->createMock(Worker::class);
+		$this->commandInputMock = $this->createMock(CommandInput::class);
+		$this->workerRunner = WorkerRunner::wrap($this->workerMock)->commandInput($this->commandInputMock);
 	}
 	
 	public function testStart() {
