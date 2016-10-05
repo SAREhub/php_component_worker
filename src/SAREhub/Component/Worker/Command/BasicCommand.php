@@ -28,4 +28,11 @@ class BasicCommand implements Command {
 	public function getParameters() {
 		return $this->parameters;
 	}
+	
+	public function __toString() {
+		return __CLASS__.':'.json_encode([
+		  'name' => $this->getName(),
+		  'parameters' => $this->getParameters()
+		]);
+	}
 }
