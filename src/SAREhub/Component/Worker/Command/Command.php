@@ -11,4 +11,9 @@ interface Command {
 	 * @return string
 	 */
 	public function getName();
+	
+	/**
+	 * @return array
+	 */
+	public function getParameters();
 }
