@@ -2,9 +2,6 @@
 
 namespace SAREhub\Component\Worker\Command;
 
-
-use phpDocumentor\Command\Command;
-
 class JsonCommandFormat implements CommandFormat {
 	
 	const NAME_INDEX = 'name';
