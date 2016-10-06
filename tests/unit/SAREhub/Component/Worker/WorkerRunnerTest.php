@@ -1,12 +1,9 @@
 <?php
 
-namespace SAREhub\Component\Worker;
-
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject;
+use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\CommandInput;
-use SAREhub\Component\Worker\Command\Standard\StopWorkerCommand;
-use SAREhub\Component\Worker\Command\StandardWorkerCommands;
+use SAREhub\Component\Worker\WorkerRunner;
 
 class WorkerRunnerTest extends TestCase {
 	
@@ -20,40 +17,49 @@ class WorkerRunnerTest extends TestCase {
 	private $workerRunner;
 	
 	protected function setUp() {
-		$this->workerMock = $this->createMock(Worker::class);
+		$this->workerMock = $this->createMock(SAREhub\Component\Worker\Worker::class);
 		$this->commandInputMock = $this->createMock(CommandInput::class);
-		$this->workerRunner = WorkerRunner::wrap($this->workerMock)->commandInput($this->commandInputMock);
+		$this->workerRunner = WorkerRunner::newWithWorkerAndCommandInput($this->workerMock, $this->commandInputMock);
 	}
 	
 	public function testStart() {
-		$this->workerMock->expects($this->once())->method('onStart');
+		$this->workerMock->expects($this->once())->method('start');
 		$this->workerRunner->start();
-		$this->workerRunner->start();
-		$this->assertTrue($this->workerRunner->isRunning());
 	}
 	
 	public function testTick() {
-		$this->workerMock->expects($this->once())->method('onTick');
-		$this->workerRunner->start();
-		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn(null);
+		$this->workerMock->method('isStarted')->willReturn('true');
+		$this->workerMock->expects($this->once())->method('tick');
 		$this->workerRunner->tick();
 	}
 	
 	public function testStop() {
-		$this->workerMock->expects($this->once())->method('onStop');
-		$this->workerRunner->start();
+		$this->workerMock->expects($this->once())->method('stop');
 		$this->workerRunner->stop();
-		$this->assertFalse($this->workerRunner->isRunning());
 	}
 	
-	public function testProcessStopCommand() {
-		$this->workerMock->expects($this->once())->method('onStop');
-		$stopWorkerCommand = $this->getMockBuilder(StopWorkerCommand::class)->disableOriginalConstructor()->getMock();
-		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn($stopWorkerCommand);
+	public function testCheckCommandWhenCommandWasReceive() {
+		$commmand = new BasicCommand('test');
+		$commandReply = 'reply';
+		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn($commmand);
+		$this->commandInputMock->expects($this->once())->method('sendCommandReply')->with($commandReply);
+		$this->workerMock->expects($this->once())->method('processCommand')
+		  ->with($this->identicalTo($commmand))->willReturn($commandReply);
 		
-		$this->workerRunner->start();
 		$this->workerRunner->tick();
-		$this->assertFalse($this->workerRunner->isRunning());
 	}
 	
+	public function testCheckCommandWhenNoCommand() {
+		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn(null);
+		$this->workerMock->expects($this->never())->method('processCommand');
+		$this->workerRunner->tick();
+	}
+	
+	public function testCheckCommandWhenWorkerIsStopped() {
+		$this->commandInputMock->expects($this->once())->method('getNextCommand')->willReturn(new BasicCommand('name'));
+		$this->commandInputMock->expects($this->once())->method('sendCommandReply');
+		$this->workerMock->expects($this->once())->method('processCommand');
+		
+		$this->workerRunner->tick();
+	}
 }

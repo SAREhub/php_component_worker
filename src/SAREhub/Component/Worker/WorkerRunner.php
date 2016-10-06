@@ -3,96 +3,54 @@
 namespace SAREhub\Component\Worker;
 
 use SAREhub\Component\Worker\Command\CommandInput;
-use SAREhub\Component\Worker\Command\Standard\StopWorkerCommand;
-use SAREhub\Component\Worker\Command\StandardWorkerCommands;
 
 /**
  * Helper class for run worker.
  */
 class WorkerRunner {
 	
-	/** @var Worker */
-	protected $worker;
+	/**
+	 * @var Worker
+	 * */
+	private $worker;
 	
-	/** @var CommandInput */
-	protected $commandInput;
+	/**
+	 * @var CommandInput
+	 */
+	private $commandInput;
 	
-	/** @var bool */
-	protected $running = false;
-	
-	public function __construct(Worker $worker) {
+	protected function __construct(Worker $worker, CommandInput $commandInput) {
 		$this->worker = $worker;
-	}
-	
-	/**
-	 * @param Worker $worker
-	 * @return WorkerRunner
-	 */
-	public static function wrap(Worker $worker) {
-		return new self($worker);
-	}
-	
-	/**
-	 * @param CommandInput $commandInput
-	 * @return $this
-	 */
-	public function commandInput(CommandInput $commandInput) {
 		$this->commandInput = $commandInput;
-		return $this;
 	}
 	
-	/**
-	 * Starts worker loop.
-	 */
-	public function run() {
-		$this->start();
-		while ($this->isRunning()) {
-			$this->tick();
-		}
+	public static function newWithWorkerAndCommandInput(Worker $worker, CommandInput $commandInput) {
+		return new self($worker, $commandInput);
 	}
 	
-	/**
-	 * Calls once on worker start.
-	 */
 	public function start() {
-		if (!$this->isRunning()) {
-			$this->worker->onStart();
-			$this->running = true;
-		}
+		$this->getWorker()->start();
 	}
 	
-	/**
-	 * Calls per main loop tick.
-	 */
 	public function tick() {
 		$this->checkCommand();
-		if ($this->isRunning()) {
-			$this->worker->onTick();
+		if ($this->getWorker()->isStarted()) {
+			$this->getWorker()->tick();
+			return true;
 		}
+		
+		return false;
+	}
+	
+	public function stop() {
+		$this->getWorker()->stop();
 	}
 	
 	protected function checkCommand() {
-		if ($command = $this->commandInput->getNextCommand()) {
-			if ($command instanceof StopWorkerCommand) {
-				$this->stop();
-				$this->commandInput->sendCommandReply('1');
-			}
+		if ($command = $this->getCommandInput()->getNextCommand()) {
+			$reply = $this->getWorker()->processCommand($command);
+			$this->getCommandInput()->sendCommandReply($reply);
 		}
-	}
-	
-	/**
-	 * Stop worker process
-	 */
-	public function stop() {
-		$this->worker->onStop();
-		$this->running = false;
-	}
-	
-	/**
-	 * @return bool
-	 */
-	public function isRunning() {
-		return $this->running;
 	}
 	
 	/**
