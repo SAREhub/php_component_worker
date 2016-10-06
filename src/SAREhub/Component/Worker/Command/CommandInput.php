@@ -16,7 +16,6 @@ interface CommandInput {
 	/**
 	 * Sends reply for processed command
 	 * @param string $reply
-	 * @return $this
 	 */
 	public function sendCommandReply($reply);
 }

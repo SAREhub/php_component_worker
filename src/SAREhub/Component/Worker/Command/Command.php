@@ -16,4 +16,6 @@ interface Command {
 	 * @return array
 	 */
 	public function getParameters();
+	
+	public function __toString();
 }
