@@ -8,70 +8,67 @@ use SAREhub\Commons\Zmq\RequestReply\RequestReceiver;
 
 class ZmqCommandInputTest extends TestCase {
 	
-	/** @var PHPUnit_Framework_MockObject_MockObject */
+	/**
+	 * @var PHPUnit_Framework_MockObject_MockObject
+	 */
 	private $receiverMock;
 	
-	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $deserializerMock;
+	/**
+	 * @var PHPUnit_Framework_MockObject_MockObject
+	 */
+	private $commandFormatMock;
 	
-	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $commandMock;
-	
-	/** @var ZmqCommandInput */
+	/**
+	 * @var ZmqCommandInput
+	 */
 	private $commandInput;
+	
+	private $commandData = 'command_data';
 	
 	protected function setUp() {
 		$this->receiverMock = $this->createMock(RequestReceiver::class);
-		$this->deserializerMock = $this->getMockBuilder(\stdClass::class)->setMethods(['__invoke'])->getMock();
-		$this->commandMock = $this->createMock(Command::class);
-		$this->deserializerMock->method('__invoke')->willReturn($this->commandMock);
-		
-		$this->commandInput = ZmqCommandInput::forReceiver($this->receiverMock)
-		  ->deserializer($this->deserializerMock);
+		$this->commandFormatMock = $this->createMock(CommandFormat::class);
+		$this->commandInput = new ZmqCommandInput($this->receiverMock, $this->commandFormatMock);
 	}
 	
-	public function testGetNextCommand() {
-		$this->receiverMock->expects($this->once())
-		  ->method('receiveRequest')
-		  ->with(false)
-		  ->willReturn("command");
-		$this->deserializerMock->expects($this->once())
-		  ->method('__invoke')
-		  ->with('command')
-		  ->willReturn($this->commandMock);
-		$this->assertSame($this->commandMock, $this->commandInput->getNextCommand());
+	public function testGetNextCommandWhenNonBlockingMode() {
+		$command = new BasicCommand('name');
+		$this->receiverMock->method('receiveRequest')
+		  ->with(false)->willReturn($this->commandData);
+		$this->commandFormatMock->expects($this->once())->method('unmarshal')
+		  ->with($this->commandData)->willReturn($command);
+		$this->assertSame($command, $this->commandInput->getNextCommand());
 	}
 	
-	public function testGetNextCommandBlocking() {
-		$this->receiverMock->expects($this->once())
-		  ->method('receiveRequest')
-		  ->with(true)
-		  ->willReturn("command");
-		$this->deserializerMock->expects($this->once())
-		  ->method('__invoke')
-		  ->with('command')
-		  ->willReturn($this->commandMock);
-		$this->assertSame($this->commandMock, $this->commandInput->blockingMode()->getNextCommand());
+	public function testGetNextCommandWhenBlockingMode() {
+		$command = new BasicCommand('name');
+		$this->receiverMock->method('receiveRequest')->with(true)->willReturn($this->commandData);
+		$this->commandFormatMock->expects($this->once())->method('unmarshal')
+		  ->with($this->commandData)->willReturn($command);
+		$this->assertSame($command, $this->commandInput->blockingMode()->getNextCommand());
 	}
 	
 	public function testGetNextCommandWhenNotSent() {
-		$this->receiverMock->expects($this->once())->method('receiveRequest')->with(false)->willReturn(false);
+		$this->receiverMock->expects($this->once())->method('receiveRequest')->willReturn(false);
+		$this->commandFormatMock->expects($this->never())->method('unmarshal');
 		$this->assertNull($this->commandInput->getNextCommand());
 	}
 	
-	public function testSendReply() {
-		$this->receiverMock->expects($this->once())
-		  ->method('sendReply')
-		  ->with('reply', false)
-		  ->willReturn($this->receiverMock);
+	public function testSendReplyWhenCommandWasReceive() {
+		$this->receiverMock->method('receiveRequest')->willReturn('c');
+		$this->commandFormatMock->method('unmarshal')->willReturn(new BasicCommand('c'));
+		$this->commandInput->getNextCommand();
+		
+		$this->receiverMock->expects($this->once())->method('sendReply')->with('reply', false);
 		$this->commandInput->sendCommandReply('reply');
 	}
 	
 	public function testSendReplyBlocking() {
-		$this->receiverMock->expects($this->once())
-		  ->method('sendReply')
-		  ->with('reply', true)
-		  ->willReturn($this->receiverMock);
+		$this->receiverMock->method('receiveRequest')->willReturn('c');
+		$this->commandFormatMock->method('unmarshal')->willReturn(new BasicCommand('c'));
+		$this->commandInput->getNextCommand();
+		
+		$this->receiverMock->expects($this->once())->method('sendReply')->with('reply', true);
 		$this->commandInput->blockingMode()->sendCommandReply('reply');
 	}
 }

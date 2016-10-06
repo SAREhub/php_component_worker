@@ -12,64 +12,48 @@ class ZmqCommandOutputTest extends TestCase {
 	private $senderMock;
 	
 	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $serializerMock;
-	
-	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $commandMock;
+	private $formatMock;
 	
 	/** @var ZmqCommandOutput */
 	private $commandOutput;
 	
 	protected function setUp() {
 		$this->senderMock = $this->createMock(RequestSender::class);
-		$this->serializerMock = $this->getMockBuilder(\stdClass::class)
-		  ->setMethods(['__invoke'])
-		  ->getMock();
-		$this->commandMock = $this->createMock(Command::class);
-		
-		
-		$this->commandOutput = ZmqCommandOutput::forSender($this->senderMock)
-		  ->serializer($this->serializerMock);
+		$this->formatMock = $this->createMock(CommandFormat::class);
+		$this->commandOutput = new ZmqCommandOutput($this->senderMock, $this->formatMock);
 	}
 	
-	public function testSendCommand() {
-		$this->senderMock->expects($this->once())
-		  ->method('sendRequest')
-		  ->with('command', false);
+	public function testSendCommandWhenNonBlockingMode() {
+		$command = new BasicCommand('c');
+		$commandData = 'c';
+		$this->senderMock->expects($this->once())->method('sendRequest')
+		  ->with($commandData, false);
+		$this->formatMock->expects($this->once())->method('marshal')
+		  ->with($this->identicalTo($command))->willReturn($commandData);
 		
-		$this->serializerMock->expects($this->once())
-		  ->method('__invoke')
-		  ->with($this->commandMock)
-		  ->willReturn("command");
-		$this->assertSame($this->commandOutput, $this->commandOutput->sendCommand($this->commandMock));
+		$this->commandOutput->sendCommand($command);
 	}
 	
-	public function testSendBlocking() {
-		$this->senderMock->expects($this->once())
-		  ->method('sendRequest')
-		  ->with('command', true);
+	public function testSendWhenBlockingMode() {
+		$command = new BasicCommand('c');
+		$commandData = 'c';
+		$this->senderMock->expects($this->once())->method('sendRequest')
+		  ->with($commandData, true);
+		$this->formatMock->expects($this->once())->method('marshal')
+		  ->with($this->identicalTo($command))->willReturn($commandData);
 		
-		$this->serializerMock->expects($this->once())
-		  ->method('__invoke')
-		  ->with($this->commandMock)
-		  ->willReturn("command");
-		$this->assertSame($this->commandOutput, $this->commandOutput->blockingMode()
-		  ->sendCommand($this->commandMock));
+		$this->commandOutput->blockingMode()->sendCommand($command);
 	}
 	
-	public function testGetCommandReply() {
-		$this->senderMock->expects($this->once())
-		  ->method('receiveReply')
-		  ->with(false)
-		  ->willReturn('reply');
+	public function testGetCommandReplyWhenNonBlockingMode() {
+		$this->senderMock->expects($this->once())->method('receiveReply')
+		  ->with(false)->willReturn('reply');
 		$this->assertEquals('reply', $this->commandOutput->getCommandReply());
 	}
 	
-	public function testGetCommandReplyBlocking() {
-		$this->senderMock->expects($this->once())
-		  ->method('receiveReply')
-		  ->with(true)
-		  ->willReturn('reply');
+	public function testGetCommandReplyWhenBlockingMode() {
+		$this->senderMock->expects($this->once())->method('receiveReply')
+		  ->with(true)->willReturn('reply');
 		$this->assertEquals('reply', $this->commandOutput->blockingMode()->getCommandReply());
 	}
 }

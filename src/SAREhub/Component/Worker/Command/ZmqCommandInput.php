@@ -6,31 +6,37 @@ use SAREhub\Commons\Zmq\RequestReply\RequestReceiver;
 
 /**
  * Worker command input based on ZMQ Request/Reply method
+ * It will be create in non blocking mode
  */
 class ZmqCommandInput implements CommandInput {
 	
-	/** @var RequestReceiver */
-	protected $commandReceiver;
+	/**
+	 * @var RequestReceiver
+	 */
+	protected $receiver;
 	
-	/** @var bool */
+	/**
+	 * @var bool
+	 */
 	protected $blockingMode = false;
 	
-	/** @var callable */
-	protected $deserializer;
-	
-	protected function __construct(RequestReceiver $commandReceiver) {
-		$this->commandReceiver = $commandReceiver;
-	}
-	
 	/**
-	 * @param RequestReceiver $commandReceiver
-	 * @return ZmqCommandInput
+	 * @var CommandFormat
 	 */
-	public static function forReceiver(RequestReceiver $commandReceiver) {
-		return new self($commandReceiver);
+	private $format;
+	
+	/**
+	 * @var Command
+	 */
+	private $lastCommand = null;
+	
+	public function __construct(RequestReceiver $receiver, CommandFormat $format) {
+		$this->receiver = $receiver;
+		$this->format = $format;
 	}
 	
 	/**
+	 * Sets blocking mode for getNextCommand - will waits for next command
 	 * @return $this
 	 */
 	public function blockingMode() {
@@ -46,32 +52,24 @@ class ZmqCommandInput implements CommandInput {
 		return $this;
 	}
 	
-	/**
-	 * @param callable $deserializer
-	 * @return $this
-	 */
-	public function deserializer(callable $deserializer) {
-		$this->deserializer = $deserializer;
-		return $this;
-	}
-	
 	public function getNextCommand() {
-		if ($commandData = $this->commandReceiver->receiveRequest($this->isInBlockingMode())) {
-			$deserializer = $this->deserializer;
-			$command = $deserializer($commandData);
-			if ($command instanceof Command) {
-				return $command;
-			}
-			
-			throw new CommandException("Deserializer must return Command instance: ".$command);
+		if ($this->lastCommand) {
+			throw new CommandException(
+			  "Can't get next command, when reply for last wasn't sent, last command was: ".$this->lastCommand
+			);
 		}
 		
-		return null;
+		$commandData = $this->receiver->receiveRequest($this->isInBlockingMode());
+		$this->lastCommand = ($commandData) ? $this->format->unmarshal($commandData) : null;
+		return $this->lastCommand;
 	}
 	
 	public function sendCommandReply($reply) {
-		$this->commandReceiver->sendReply($reply, $this->isInBlockingMode());
-		return $this;
+		if ($this->lastCommand === null) {
+			throw new CommandException("Reply can be sent only when receive command");
+		}
+		$this->receiver->sendReply($reply, $this->isInBlockingMode());
+		$this->lastCommand = null;
 	}
 	
 	/**

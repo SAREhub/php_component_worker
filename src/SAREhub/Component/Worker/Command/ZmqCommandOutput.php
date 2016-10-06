@@ -7,20 +7,13 @@ use SAREhub\Commons\Zmq\RequestReply\RequestSender;
 
 class ZmqCommandOutput implements CommandOutput {
 	
-	protected $commandSender;
-	protected $blockingMode = false;
-	protected $serializer;
+	private $sender;
+	private $blockingMode = false;
+	private $format;
 	
-	protected function __construct(RequestSender $commandSender) {
-		$this->commandSender = $commandSender;
-	}
-	
-	/**
-	 * @param RequestSender $commandSender
-	 * @return ZmqCommandOutput
-	 */
-	public static function forSender(RequestSender $commandSender) {
-		return new self($commandSender);
+	public function __construct(RequestSender $sender, CommandFormat $format) {
+		$this->sender = $sender;
+		$this->format = $format;
 	}
 	
 	/**
@@ -39,23 +32,13 @@ class ZmqCommandOutput implements CommandOutput {
 		return $this;
 	}
 	
-	/**
-	 * @param callable $serializer
-	 * @return $this
-	 */
-	public function serializer(callable $serializer) {
-		$this->serializer = $serializer;
-		return $this;
-	}
-	
 	public function sendCommand(Command $command) {
-		$serializer = $this->serializer;
-		$this->commandSender->sendRequest($serializer($command), $this->isInBlockingMode());
-		return $this;
+		$commandData = $this->format->marshal($command);
+		$this->sender->sendRequest($commandData, $this->isInBlockingMode());
 	}
 	
 	public function getCommandReply() {
-		return $this->commandSender->receiveReply($this->isInBlockingMode());
+		return $this->sender->receiveReply($this->isInBlockingMode());
 	}
 	
 	public function isInBlockingMode() {
