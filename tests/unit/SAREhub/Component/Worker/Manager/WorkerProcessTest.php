@@ -38,4 +38,9 @@ class WorkerProcessTest extends TestCase {
 		$this->processMock->expects($this->once())->method('stop');
 		$this->workerProcess->kill();
 	}
+	
+	public function testIsRunning() {
+		$this->processMock->expects($this->once())->method('isRunning')->willReturn(true);
+		$this->assertTrue($this->workerProcess->isRunning());
+	}
 }

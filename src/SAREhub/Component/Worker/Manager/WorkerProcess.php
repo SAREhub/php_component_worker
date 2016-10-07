@@ -36,6 +36,10 @@ class WorkerProcess {
 		$this->process->stop();
 	}
 	
+	public function isRunning() {
+		return $this->process->isRunning();
+	}
+	
 	/**
 	 * @return string
 	 */
