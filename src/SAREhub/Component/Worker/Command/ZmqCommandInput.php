@@ -78,4 +78,11 @@ class ZmqCommandInput implements CommandInput {
 	public function isInBlockingMode() {
 		return $this->blockingMode;
 	}
+	
+	/**
+	 * Will close command input
+	 */
+	public function close() {
+		$this->receiver->unbind();
+	}
 }

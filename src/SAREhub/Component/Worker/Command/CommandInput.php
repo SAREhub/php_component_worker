@@ -18,4 +18,9 @@ interface CommandInput {
 	 * @param string $reply
 	 */
 	public function sendCommandReply($reply);
+	
+	/**
+	 * Will close command input
+	 */
+	public function close();
 }

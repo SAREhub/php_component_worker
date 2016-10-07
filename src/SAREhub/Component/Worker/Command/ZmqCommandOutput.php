@@ -44,4 +44,11 @@ class ZmqCommandOutput implements CommandOutput {
 	public function isInBlockingMode() {
 		return $this->blockingMode;
 	}
+	
+	/**
+	 * Will close output of command
+	 */
+	public function close() {
+		$this->sender->disconnect();
+	}
 }

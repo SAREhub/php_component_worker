@@ -71,4 +71,9 @@ class ZmqCommandInputTest extends TestCase {
 		$this->receiverMock->expects($this->once())->method('sendReply')->with('reply', true);
 		$this->commandInput->blockingMode()->sendCommandReply('reply');
 	}
+	
+	public function testClose() {
+		$this->receiverMock->expects($this->once())->method('unbind');
+		$this->commandInput->close();
+	}
 }

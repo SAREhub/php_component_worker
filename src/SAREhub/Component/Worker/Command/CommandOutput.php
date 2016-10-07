@@ -19,4 +19,9 @@ interface CommandOutput {
 	 * @return string|null
 	 */
 	public function getCommandReply();
+	
+	/**
+	 * Will close output of command
+	 */
+	public function close();
 }

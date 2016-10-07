@@ -56,4 +56,9 @@ class ZmqCommandOutputTest extends TestCase {
 		  ->with(true)->willReturn('reply');
 		$this->assertEquals('reply', $this->commandOutput->blockingMode()->getCommandReply());
 	}
+	
+	public function testClose() {
+		$this->senderMock->expects($this->once())->method('disconnect');
+		$this->commandOutput->close();
+	}
 }
