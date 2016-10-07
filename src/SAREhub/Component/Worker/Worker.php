@@ -3,6 +3,7 @@
 namespace SAREhub\Component\Worker;
 
 use SAREhub\Component\Worker\Command\Command;
+use SAREhub\Component\Worker\Command\CommandReply;
 
 /**
  * Represents Worker instance.
@@ -30,8 +31,7 @@ interface Worker {
 	/**
 	 * Executed when command was received.
 	 * @param Command $command
-	 * @return mixed command reply
-	 * @throws WorkerException When something was wrong.
+	 * @return CommandReply command reply
 	 */
 	public function processCommand(Command $command);
 	
