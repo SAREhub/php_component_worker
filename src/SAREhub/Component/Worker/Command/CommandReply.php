@@ -29,6 +29,14 @@ class CommandReply implements \JsonSerializable {
 	}
 	
 	/**
+	 * @param string $reply
+	 * @return CommandReply
+	 */
+	public static function createFromJson($reply) {
+		return self::createFromArray(json_decode($reply, true));
+	}
+	
+	/**
 	 * @param array $reply
 	 * @return CommandReply
 	 */
