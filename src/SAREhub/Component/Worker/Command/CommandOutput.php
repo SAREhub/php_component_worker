@@ -10,13 +10,14 @@ interface CommandOutput {
 	/**
 	 * Sends command to output.
 	 * @param Command $command
-	 * @return $this
+	 * @throws CommandException
 	 */
 	public function sendCommand(Command $command);
 	
 	/**
 	 * Gets reply for sent command if available or return nulll.
 	 * @return string|null
+	 * @throws CommandException
 	 */
 	public function getCommandReply();
 	

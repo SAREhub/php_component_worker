@@ -34,11 +34,20 @@ class ZmqCommandOutput implements CommandOutput {
 	
 	public function sendCommand(Command $command) {
 		$commandData = $this->format->marshal($command);
-		$this->sender->sendRequest($commandData, $this->isInBlockingMode());
+		try {
+			$this->sender->sendRequest($commandData, $this->isInBlockingMode());
+		} catch (\ZMQException $e) {
+			throw new CommandException("send command: ".$command, 0, $e);
+		}
 	}
 	
+	
 	public function getCommandReply() {
-		return $this->sender->receiveReply($this->isInBlockingMode());
+		try {
+			return $this->sender->receiveReply($this->isInBlockingMode());
+		} catch (\ZMQException $e) {
+			throw new CommandException("get command reply ", $e);
+		}
 	}
 	
 	public function isInBlockingMode() {
