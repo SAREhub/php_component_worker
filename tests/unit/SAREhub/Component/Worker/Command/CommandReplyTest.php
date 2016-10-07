@@ -27,4 +27,14 @@ class CommandReplyTest extends TestCase {
 		$this->assertEquals('d', $reply->getData());
 	}
 	
+	public function testIsSuccess() {
+		$reply = CommandReply::success('m', 'd');
+		$this->assertTrue($reply->isSuccess());
+	}
+	
+	public function testIsError() {
+		$reply = CommandReply::error('m', 'd');
+		$this->assertTrue($reply->isError());
+	}
+	
 }

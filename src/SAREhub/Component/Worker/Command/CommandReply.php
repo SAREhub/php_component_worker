@@ -72,6 +72,20 @@ class CommandReply implements \JsonSerializable {
 	}
 	
 	/**
+	 * @return bool
+	 */
+	public function isSuccess() {
+		return $this->getStatus() === self::SUCCESS_STATUS;
+	}
+	
+	/**
+	 * @return bool
+	 */
+	public function isError() {
+		return $this->getStatus() === self::ERROR_STATUS;
+	}
+	
+	/**
 	 * @return string
 	 */
 	public function getMessage() {
