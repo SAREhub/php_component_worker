@@ -38,7 +38,7 @@ class WorkerCommandService implements LoggerAwareInterface {
 	}
 	
 	/**
-	 * @param stirng $uuid
+	 * @param string $uuid
 	 */
 	public function register($uuid) {
 		if (!$this->has($uuid)) {
