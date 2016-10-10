@@ -6,7 +6,6 @@ use SAREhub\Component\Worker\BasicWorker;
 use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandReply;
-use SAREhub\Component\Worker\StandardWorkerCommands;
 use SAREhub\Component\Worker\WorkerContext;
 
 class TestWorker extends BasicWorker {
@@ -98,7 +97,7 @@ class BasicWorkerTest extends TestCase {
 		$this->assertEquals(1, $this->methodSpy->getInvocationCount());
 	}
 	
-	public function testProcessCommandWhenCustomCommandThenDoCommand() {
+	public function testProcessCommandThenDoCommand() {
 		$this->createWorkerMethodSpy('doCommand');
 		$command = new BasicCommand('test');
 		$this->worker->processCommand($command);
@@ -106,24 +105,11 @@ class BasicWorkerTest extends TestCase {
 		$this->assertSame($command, $this->methodSpy->getInvocations()[0]->parameters[0]);
 	}
 	
-	public function testProcessCommandWhenCustomCommandThenReturnReply() {
+	public function testProcessCommandThenReturnReply() {
 		$this->createWorkerSpy('doCommand');
 		$expectedReply = CommandReply::success('r');
 		$this->worker->expects($this->once())->method('doCommand')->willReturn($expectedReply);
 		$this->assertSame($expectedReply, $this->worker->processCommand(new BasicCommand('test')));
-	}
-	
-	public function testProcessCommandWhenStopCommand() {
-		
-		$this->createWorkerMethodSpy('stop');
-		$this->worker->processCommand(new BasicCommand(StandardWorkerCommands::STOP));
-		$this->assertEquals(1, $this->methodSpy->getInvocationCount());
-	}
-	
-	public function testProcessCommandWhenStopCommandThenReturnSuccessReply() {
-		$this->worker = new TestWorker(WorkerContext::newInstance());
-		$reply = $this->worker->processCommand(new BasicCommand(StandardWorkerCommands::STOP));
-		$this->assertTrue($reply->isSuccess());
 	}
 	
 	private function createWorkerMethodSpy($method) {
