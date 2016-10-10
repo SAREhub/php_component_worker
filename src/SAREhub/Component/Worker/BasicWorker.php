@@ -6,6 +6,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use SAREhub\Component\Worker\Command\Command;
+use SAREhub\Component\Worker\Command\CommandReply;
 
 /**
  * Worker implementation with auto handle lifecycle and logging support.
@@ -24,7 +25,7 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 	private $context;
 	
 	/**
-	 * @var bool
+	 * @var boolean
 	 */
 	private $started = false;
 	
@@ -36,6 +37,7 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 		if ($this->isStopped()) {
 			$this->doStart();
 			$this->started = true;
+			$this->getLogger()->info('Worker was started');
 		}
 	}
 	
@@ -46,7 +48,7 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 	protected abstract function doStart();
 	
 	public function tick() {
-		if ($this->isStarted()) {
+		if ($this->isRunning()) {
 			$this->doTick();
 		}
 	}
@@ -61,7 +63,9 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 		if ($this->isStarted()) {
 			$this->doStop();
 			$this->started = false;
+			$this->getLogger()->info('Worker was stopped');
 		}
+		
 	}
 	
 	/**
@@ -71,7 +75,14 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 	protected abstract function doStop();
 	
 	public function processCommand(Command $command) {
-		$this->doCommand($command);
+		$this->getLogger()->info('execute command: '.$command);
+		switch ($command->getName()) {
+			case StandardWorkerCommands::STOP:
+				$this->stop();
+				return CommandReply::success('stopped');
+			default:
+				return $this->doCommand($command);
+		}
 	}
 	
 	/**
@@ -90,8 +101,12 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 		return $this->started;
 	}
 	
-	public function getUuid() {
-		return $this->getContext()->getUuid();
+	public function isRunning() {
+		return $this->isStarted();
+	}
+	
+	public function getId() {
+		return $this->getContext()->getId();
 	}
 	
 	public function getContext() {
@@ -102,8 +117,8 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 	 * Gets logger assigned to that object.
 	 * @return LoggerInterface
 	 */
-	protected function getLogger() {
-		if ($this->logger) {
+	public function getLogger() {
+		if ($this->logger === null) {
 			$this->logger = new NullLogger();
 		}
 		
@@ -113,6 +128,4 @@ abstract class BasicWorker implements Worker, LoggerAwareInterface {
 	public function setLogger(LoggerInterface $logger) {
 		$this->logger = $logger;
 	}
-	
-	
 }
