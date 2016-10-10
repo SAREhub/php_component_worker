@@ -40,21 +40,21 @@ class WorkerProcessServiceTest extends TestCase {
 	}
 	
 	public function testUnregisterWhenExists() {
-		$this->service->register('uuid');
-		$this->service->unregister('uuid');
-		$this->assertFalse($this->service->has('uuid'));
+		$this->service->register('worker');
+		$this->service->unregister('worker');
+		$this->assertFalse($this->service->has('worker'));
 	}
 	
 	public function testStartWhenExists() {
-		$this->service->register('uuid');
+		$this->service->register('id');
 		$this->process->expects($this->once())->method('start');
-		$this->service->start('uuid');
+		$this->service->start('id');
 	}
 	
 	public function testKillWhenExists() {
-		$this->service->register('uuid');
+		$this->service->register('id');
 		$this->process->expects($this->once())->method('kill');
-		$this->service->kill('uuid');
+		$this->service->kill('id');
 	}
 	
 	public function testHasWhenNotExists() {

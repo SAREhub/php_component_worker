@@ -2,7 +2,6 @@
 
 namespace SAREhub\Component\Worker\Manager;
 
-
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -27,52 +26,63 @@ class WorkerProcessService implements LoggerAwareInterface {
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @return WorkerProcess
 	 */
-	public function register($uuid) {
-		if (!$this->has($uuid)) {
-			$process = $this->processFactory->create($uuid);
-			$this->processList[$uuid] = $process;
+	public function register($id) {
+		if (!$this->has($id)) {
+			$process = $this->processFactory->create($id);
+			$this->processList[$id] = $process;
+			$this->getLogger()->info('registered worker process: '.$id);
 			return $process;
 		}
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 */
-	public function unregister($uuid) {
-		if ($this->has($uuid)) {
-			unset($this->processList['uuid']);
+	public function unregister($id) {
+		if ($this->has($id)) {
+			unset($this->processList[$id]);
+			$this->getLogger()->info('unregistered worker process: '.$id);
 		}
 	}
 	
-	public function start($uuid) {
-		if ($process = $this->get($uuid)) {
+	public function start($id) {
+		if ($process = $this->get($id)) {
 			$process->start();
+			$this->getLogger()->info('started worker process: '.$id);
 		}
 	}
 	
-	public function kill($uuid) {
-		if ($process = $this->get($uuid)) {
+	public function kill($id) {
+		if ($process = $this->get($id)) {
 			$process->kill();
+			$this->getLogger()->info('killed worker process: '.$id);
 		}
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @return null|WorkerProcess
 	 */
-	protected function get($uuid) {
-		return $this->has($uuid) ? $this->processList[$uuid] : null;
+	protected function get($id) {
+		return $this->has($id) ? $this->processList[$id] : null;
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @return bool
 	 */
-	public function has($uuid) {
-		return isset($this->processList[$uuid]);
+	public function has($id) {
+		return isset($this->processList[$id]);
+	}
+	
+	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger() {
+		return $this->logger;
 	}
 	
 	public function setLogger(LoggerInterface $logger) {
