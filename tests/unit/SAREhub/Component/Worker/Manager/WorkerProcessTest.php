@@ -6,8 +6,6 @@ use Symfony\Component\Process\Process;
 
 class WorkerProcessTest extends TestCase {
 	
-	private $uuid = 'id';
-	
 	/**
 	 * @var PHPUnit_Framework_MockObject_MockObject
 	 */
@@ -20,19 +18,13 @@ class WorkerProcessTest extends TestCase {
 	
 	protected function setUp() {
 		$this->processMock = $this->createMock(Process::class);
-		$this->workerProcess = new WorkerProcess($this->uuid, $this->processMock);
-	}
-	
-	public function testCreate() {
-		$this->assertEquals($this->uuid, $this->workerProcess->getUuid());
-		$this->assertSame($this->processMock, $this->workerProcess->getProcess());
+		$this->workerProcess = new WorkerProcess('id', $this->processMock);
 	}
 	
 	public function testStart() {
 		$this->processMock->expects($this->once())->method('start');
 		$this->workerProcess->start();
 	}
-	
 	
 	public function testKill() {
 		$this->processMock->expects($this->once())->method('stop');

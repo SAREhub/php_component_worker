@@ -12,12 +12,12 @@ class WorkerProcess {
 	/**
 	 * @var string
 	 */
-	private $uuid;
+	private $id;
 	
 	private $process;
 	
-	public function __construct($uuid, Process $process) {
-		$this->uuid = $uuid;
+	public function __construct($id, Process $process) {
+		$this->id = $id;
 		$this->process = $process;
 	}
 	
@@ -43,8 +43,8 @@ class WorkerProcess {
 	/**
 	 * @return string
 	 */
-	public function getUuid() {
-		return $this->uuid;
+	public function getId() {
+		return $this->id;
 	}
 	
 	/**
