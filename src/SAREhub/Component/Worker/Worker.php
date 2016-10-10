@@ -45,10 +45,12 @@ interface Worker {
 	 */
 	public function isStopped();
 	
+	public function isRunning();
+	
 	/**
 	 * @return string
 	 */
-	public function getUuid();
+	public function getId();
 	
 	/**
 	 * @return WorkerContext
