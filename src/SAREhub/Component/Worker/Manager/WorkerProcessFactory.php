@@ -58,17 +58,17 @@ class WorkerProcessFactory {
 	}
 	
 	/**
-	 * @param string $workerUuid
+	 * @param string $workerId
 	 * @return WorkerProcess
 	 */
-	public function create($workerUuid) {
+	public function create($workerId) {
 		v::notEmpty()->setName('runnerScriptPath')->check($this->runnerScriptPath);
 		
-		$standardArguments = ['php', $this->runnerScriptPath, $workerUuid];
+		$standardArguments = ['php', $this->runnerScriptPath, $workerId];
 		$processArguments = array_merge($standardArguments, $this->arguments);
 		$process = ProcessBuilder::create($processArguments)
 		  ->setWorkingDirectory($this->workingDirectory)
 		  ->getProcess();
-		return new WorkerProcess($workerUuid, $process);
+		return new WorkerProcess($workerId, $process);
 	}
 }

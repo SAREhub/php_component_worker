@@ -11,17 +11,17 @@ class WorkerProcessFactoryTest extends TestCase {
 	 */
 	public function testCreateWhenRunnerScriptPathEmpty() {
 		$factory = WorkerProcessFactory::newInstance();
-		$factory->create('uuid');
+		$factory->create('id');
 	}
 	
 	public function testCreateWhenOnlyRunnerScriptPathSets() {
 		$factory = WorkerProcessFactory::newInstance()->withRunnerScriptPath('runner.php');
-		$workerProcess = $factory->create('uuid');
+		$workerProcess = $factory->create('id');
 		
-		$this->assertSame('uuid', $workerProcess->getUuid());
+		$this->assertSame('id', $workerProcess->getId());
 		$process = $workerProcess->getProcess();
 		$this->assertInstanceOf(Process::class, $process);
-		$this->assertEquals('"php" "runner.php" "uuid"', $process->getCommandLine());
+		$this->assertEquals('"php" "runner.php" "id"', $process->getCommandLine());
 	}
 	
 	public function testCreateWithCustomWorkingDirectory() {
@@ -29,7 +29,7 @@ class WorkerProcessFactoryTest extends TestCase {
 		  ->withRunnerScriptPath('runner.php')
 		  ->withWorkingDirectory('dir');
 		
-		$workerProcess = $factory->create('uuid');
+		$workerProcess = $factory->create('id');
 		$process = $workerProcess->getProcess();
 		$this->assertEquals('dir', $process->getWorkingDirectory());
 	}
@@ -39,8 +39,8 @@ class WorkerProcessFactoryTest extends TestCase {
 		  ->withRunnerScriptPath('runner.php')
 		  ->withArguments(['arg1', 'arg2']);
 		
-		$workerProcess = $factory->create('uuid');
+		$workerProcess = $factory->create('id');
 		$process = $workerProcess->getProcess();
-		$this->assertEquals('"php" "runner.php" "uuid" "arg1" "arg2"', $process->getCommandLine());
+		$this->assertEquals('"php" "runner.php" "id" "arg1" "arg2"', $process->getCommandLine());
 	}
 }
