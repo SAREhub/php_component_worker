@@ -10,7 +10,7 @@ class WorkerContext {
 	/**
 	 * @var string
 	 */
-	private $uuid;
+	private $id;
 	
 	/**
 	 * @var string
@@ -29,19 +29,19 @@ class WorkerContext {
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @return $this
 	 */
-	public function withUuid($uuid) {
-		$this->uuid = $uuid;
+	public function withId($id) {
+		$this->id = $id;
 		return $this;
 	}
 	
 	/**
 	 * @return string
 	 */
-	public function getUuid() {
-		return $this->uuid;
+	public function getId() {
+		return $this->id;
 	}
 	
 	/**
