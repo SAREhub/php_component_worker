@@ -4,8 +4,8 @@ namespace SAREhub\Component\Worker\Command;
 interface CommandOutputFactory {
 	
 	/**
-	 * @param string $workerUuid
+	 * @param string $workerId
 	 * @return CommandOutput
 	 */
-	public function create($workerUuid);
+	public function create($workerId);
 }
