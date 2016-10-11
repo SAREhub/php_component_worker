@@ -2,7 +2,6 @@
 
 namespace SAREhub\Component\Worker\Manager;
 
-use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use SAREhub\Commons\Misc\TimeProvider;
@@ -10,8 +9,9 @@ use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandOutput;
 use SAREhub\Component\Worker\Command\CommandOutputFactory;
 use SAREhub\Component\Worker\Command\CommandReply;
+use SAREhub\Component\Worker\Service\ServiceSupport;
 
-class WorkerCommandService implements LoggerAwareInterface {
+class WorkerCommandService extends ServiceSupport {
 	
 	const DEFAULT_COMMAND_REPLY_TIMEOUT = 30;
 	
@@ -30,42 +30,41 @@ class WorkerCommandService implements LoggerAwareInterface {
 	 */
 	private $outputList = [];
 	
-	private $commandReplyTimeout = self::DEFAULT_COMMAND_REPLY_TIMEOUT;
-	
 	public function __construct(CommandOutputFactory $factory) {
 		$this->outputFactory = $factory;
 		$this->logger = new NullLogger();
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 */
-	public function register($uuid) {
-		if (!$this->has($uuid)) {
-			$this->outputList[$uuid] = $this->outputFactory->create($uuid);
+	public function register($id) {
+		if (!$this->has($id)) {
+			$this->outputList[$id] = $this->outputFactory->create($id);
 		}
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 */
-	public function unregister($uuid) {
-		if ($output = $this->get($uuid)) {
+	public function unregister($id) {
+		if ($output = $this->get($id)) {
 			$output->close();
-			unset($this->outputList[$uuid]);
+			unset($this->outputList[$id]);
 		}
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @param Command $command
+	 * @param int $replyTimeout
 	 * @return CommandReply
 	 */
-	public function sendCommand($uuid, Command $command) {
-		if ($output = $this->get($uuid)) {
+	public function sendCommand($id, Command $command, $replyTimeout = self::DEFAULT_COMMAND_REPLY_TIMEOUT) {
+		if ($output = $this->get($id)) {
 			try {
 				$output->sendCommand($command);
-				$timeoutTime = TimeProvider::get()->now() + $this->getCommandReplyTimeout();
+				$timeoutTime = TimeProvider::get()->now() + $replyTimeout;
 				while (true) {
 					if ($reply = $output->getCommandReply()) {
 						return CommandReply::createFromJson($reply);
@@ -81,40 +80,41 @@ class WorkerCommandService implements LoggerAwareInterface {
 			}
 		}
 		
-		return CommandReply::error('worker not exists', $uuid);
+		return CommandReply::error('worker not exists', $id);
 	}
 	
+	protected function doStart() {
+		
+	}
+	
+	protected function doTick() {
+		
+	}
+	
+	protected function doStop() {
+		foreach ($this->outputList as $id => $output) {
+			$this->unregister($id);
+		}
+	}
+	
+	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @return null|CommandOutput
 	 */
-	protected function get($uuid) {
-		return $this->has($uuid) ? $this->outputList[$uuid] : null;
+	protected function get($id) {
+		return $this->has($id) ? $this->outputList[$id] : null;
 	}
 	
 	/**
-	 * @param string $uuid
+	 * @param string $id
 	 * @return bool
 	 */
-	public function has($uuid) {
-		return isset($this->outputList[$uuid]);
+	public function has($id) {
+		return isset($this->outputList[$id]);
 	}
 	
 	public function setLogger(LoggerInterface $logger) {
 		$this->logger = $logger;
-	}
-	
-	/**
-	 * @param int $timeout
-	 */
-	public function setCommandReplyTimeout($timeout) {
-		$this->commandReplyTimeout = $timeout;
-	}
-	
-	/**
-	 * @return int
-	 */
-	public function getCommandReplyTimeout() {
-		return $this->commandReplyTimeout;
 	}
 }

@@ -3,7 +3,9 @@
 namespace SAREhub\Component\Worker\Manager;
 
 
-class StandardManagerCommands {
+use SAREhub\Component\Worker\Command\BasicCommand;
+
+class ManagerCommands {
 	
 	const COMMAND_NAME_PREFIX = 'worker.manager.';
 	
@@ -21,4 +23,16 @@ class StandardManagerCommands {
 	const STATUS = self::COMMAND_NAME_PREFIX.'status';
 	const INFO = self::COMMAND_NAME_PREFIX.'info';
 	const STATS = self::COMMAND_NAME_PREFIX.'stats';
+	
+	/**
+	 * @param $workerId
+	 * @return BasicCommand
+	 */
+	public static function start($workerId) {
+		return new BasicCommand(self::START, ['id' => $workerId]);
+	}
+	
+	public static function stop($workerId) {
+		return new BasicCommand(self::STOP, ['id' => $workerId]);
+	}
 }

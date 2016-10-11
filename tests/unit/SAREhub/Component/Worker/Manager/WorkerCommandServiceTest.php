@@ -84,8 +84,7 @@ class WorkerCommandServiceTest extends TestCase {
 		$command = new BasicCommand('c');
 		$this->outputMock->expects($this->once())->method('getCommandReply');
 		TimeProvider::get()->freezeTime();
-		$this->service->setCommandReplyTimeout(0);
-		$reply = $this->service->sendCommand('id', $command);
+		$reply = $this->service->sendCommand('id', $command, 0);
 		$this->assertEquals('reply timeout', $reply->getMessage());
 		TimeProvider::get()->unfreezeTime();
 	}
