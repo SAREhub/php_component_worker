@@ -71,6 +71,14 @@ class WorkerProcessService implements LoggerAwareInterface {
 	}
 	
 	/**
+	 * @param $id
+	 * @return boolean
+	 */
+	public function isWorkerRunning($id) {
+		return $this->get($id)->isRunning();
+	}
+	
+	/**
 	 * @param string $id
 	 * @return bool
 	 */
