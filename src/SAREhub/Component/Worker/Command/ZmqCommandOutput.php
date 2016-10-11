@@ -2,7 +2,6 @@
 
 namespace SAREhub\Component\Worker\Command;
 
-
 use SAREhub\Commons\Zmq\RequestReply\RequestSender;
 
 class ZmqCommandOutput implements CommandOutput {
@@ -59,5 +58,19 @@ class ZmqCommandOutput implements CommandOutput {
 	 */
 	public function close() {
 		$this->sender->disconnect();
+	}
+	
+	/**
+	 * @return RequestSender
+	 */
+	public function getSender() {
+		return $this->sender;
+	}
+	
+	/**
+	 * @return CommandFormat
+	 */
+	public function getCommandFormat() {
+		return $this->format;
 	}
 }
