@@ -1,8 +1,8 @@
 <?php
 
-namespace SAREhub\Component\Worker\Command;
 
 use PHPUnit\Framework\TestCase;
+use SAREhub\Component\Worker\Command\BasicCommand;
 
 class BasicCommandTest extends TestCase {
 	

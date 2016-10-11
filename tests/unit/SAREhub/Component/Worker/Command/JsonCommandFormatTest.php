@@ -1,8 +1,9 @@
 <?php
 
-namespace SAREhub\Component\Worker\Command;
 
 use PHPUnit\Framework\TestCase;
+use SAREhub\Component\Worker\Command\BasicCommand;
+use SAREhub\Component\Worker\Command\JsonCommandFormat;
 
 class JsonCommandFormatTest extends TestCase {
 	

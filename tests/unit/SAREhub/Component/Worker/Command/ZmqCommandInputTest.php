@@ -1,10 +1,11 @@
 <?php
 
-namespace SAREhub\Component\Worker\Command;
 
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject;
 use SAREhub\Commons\Zmq\RequestReply\RequestReceiver;
+use SAREhub\Component\Worker\Command\BasicCommand;
+use SAREhub\Component\Worker\Command\CommandFormat;
+use SAREhub\Component\Worker\Command\ZmqCommandInput;
 
 class ZmqCommandInputTest extends TestCase {
 	
