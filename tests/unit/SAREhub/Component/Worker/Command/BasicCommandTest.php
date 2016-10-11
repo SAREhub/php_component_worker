@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 class BasicCommandTest extends TestCase {
 	
-	
 	public function testCreateWithoutParameters() {
 		$command = new BasicCommand('name');
 		$this->assertEquals('name', $command->getName());
