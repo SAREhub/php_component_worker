@@ -30,7 +30,7 @@ class BasicCommand implements Command {
 	}
 	
 	public function __toString() {
-		return __CLASS__.':'.json_encode([
+		return 'COMMAND:'.json_encode([
 		  'name' => $this->getName(),
 		  'parameters' => $this->getParameters()
 		]);

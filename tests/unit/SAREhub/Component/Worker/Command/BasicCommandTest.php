@@ -28,6 +28,6 @@ class BasicCommandTest extends TestCase {
 			'param1' => 1
 		  ]
 		]);
-		$this->assertEquals(BasicCommand::class.':'.$expectedJson, (string)$command);
+		$this->assertEquals('COMMAND:'.$expectedJson, (string)$command);
 	}
 }
