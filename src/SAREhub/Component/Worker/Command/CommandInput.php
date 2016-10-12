@@ -12,7 +12,7 @@ interface CommandInput {
 	 * @param bool $wait
 	 * @return null|Command
 	 */
-	public function getNextCommand($wait = false);
+	public function getNext($wait = false);
 	
 	/**
 	 * Will close command input

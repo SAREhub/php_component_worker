@@ -2,7 +2,7 @@
 
 
 use PHPUnit\Framework\TestCase;
-use SAREhub\Commons\Zmq\RequestReply\RequestReceiver;
+use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
 use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\CommandFormat;
 use SAREhub\Component\Worker\Command\ZmqCommandInput;
@@ -12,7 +12,7 @@ class ZmqCommandInputTest extends TestCase {
 	/**
 	 * @var PHPUnit_Framework_MockObject_MockObject
 	 */
-	private $receiverMock;
+	private $subscriberMock;
 	
 	/**
 	 * @var PHPUnit_Framework_MockObject_MockObject
@@ -24,57 +24,46 @@ class ZmqCommandInputTest extends TestCase {
 	 */
 	private $commandInput;
 	
-	private $commandData = 'command_data';
+	private $commandData = ['topic' => 'command', 'body' => 'data'];
 	
 	protected function setUp() {
-		$this->receiverMock = $this->createMock(RequestReceiver::class);
+		$this->subscriberMock = $this->createMock(Subscriber::class);
 		$this->commandFormatMock = $this->createMock(CommandFormat::class);
-		$this->commandInput = new ZmqCommandInput($this->receiverMock, $this->commandFormatMock);
+		$this->commandInput = new ZmqCommandInput($this->subscriberMock, $this->commandFormatMock);
 	}
 	
-	public function testGetNextCommandWhenNonBlockingMode() {
-		$command = new BasicCommand('name');
-		$this->receiverMock->method('receiveRequest')
-		  ->with(false)->willReturn($this->commandData);
+	public function testGetNextThenSubscriberReceive() {
+		$this->subscriberMock->expects($this->once())->method('receive')->with(false);
+		$this->commandInput->getNext();
+	}
+	
+	public function testGetNextWhenCommandThenCommandFormatUnmarshal() {
+		$this->subscriberMock->method('receive')->willReturn($this->commandData);
 		$this->commandFormatMock->expects($this->once())->method('unmarshal')
-		  ->with($this->commandData)->willReturn($command);
-		$this->assertSame($command, $this->commandInput->getNextCommand());
+		  ->with($this->commandData['body']);
+		$this->commandInput->getNext();
 	}
 	
-	public function testGetNextCommandWhenBlockingMode() {
-		$command = new BasicCommand('name');
-		$this->receiverMock->method('receiveRequest')->with(true)->willReturn($this->commandData);
-		$this->commandFormatMock->expects($this->once())->method('unmarshal')
-		  ->with($this->commandData)->willReturn($command);
-		$this->assertSame($command, $this->commandInput->blockingMode()->getNextCommand());
+	public function testGetNextWhenCommandThenReturnCommand() {
+		$command = new BasicCommand("test");
+		$this->subscriberMock->method('receive')->willReturn($this->commandData);
+		$this->commandFormatMock->method('unmarshal')->willReturn($command);
+		$this->assertSame($command, $this->commandInput->getNext());
 	}
 	
-	public function testGetNextCommandWhenNotSent() {
-		$this->receiverMock->expects($this->once())->method('receiveRequest')->willReturn(false);
+	public function testGetNextWhenWaitThenReceiveInWait() {
+		$this->subscriberMock->method('receive')->with(true);
+		$this->commandInput->getNext(true);
+	}
+	
+	public function testGetNextWhenNotSent() {
+		$this->subscriberMock->method('receive')->willReturn(false);
 		$this->commandFormatMock->expects($this->never())->method('unmarshal');
-		$this->assertNull($this->commandInput->getNextCommand());
-	}
-	
-	public function testSendReplyWhenCommandWasReceive() {
-		$this->receiverMock->method('receiveRequest')->willReturn('c');
-		$this->commandFormatMock->method('unmarshal')->willReturn(new BasicCommand('c'));
-		$this->commandInput->getNextCommand();
-		
-		$this->receiverMock->expects($this->once())->method('sendReply')->with('reply', false);
-		$this->commandInput->sendCommandReply('reply');
-	}
-	
-	public function testSendReplyBlocking() {
-		$this->receiverMock->method('receiveRequest')->willReturn('c');
-		$this->commandFormatMock->method('unmarshal')->willReturn(new BasicCommand('c'));
-		$this->commandInput->getNextCommand();
-		
-		$this->receiverMock->expects($this->once())->method('sendReply')->with('reply', true);
-		$this->commandInput->blockingMode()->sendCommandReply('reply');
+		$this->assertNull($this->commandInput->getNext());
 	}
 	
 	public function testClose() {
-		$this->receiverMock->expects($this->once())->method('unbind');
+		$this->subscriberMock->expects($this->once())->method('disconnect');
 		$this->commandInput->close();
 	}
 }

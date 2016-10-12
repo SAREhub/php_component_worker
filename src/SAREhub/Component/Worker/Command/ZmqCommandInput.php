@@ -2,7 +2,7 @@
 
 namespace SAREhub\Component\Worker\Command;
 
-use SAREhub\Commons\Zmq\RequestReply\RequestReceiver;
+use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
 
 /**
  * Worker command input based on ZMQ Request/Reply method
@@ -11,78 +11,34 @@ use SAREhub\Commons\Zmq\RequestReply\RequestReceiver;
 class ZmqCommandInput implements CommandInput {
 	
 	/**
-	 * @var RequestReceiver
+	 * @var Subscriber
 	 */
-	protected $receiver;
-	
-	/**
-	 * @var bool
-	 */
-	protected $blockingMode = false;
+	private $commandSubscriber;
 	
 	/**
 	 * @var CommandFormat
 	 */
 	private $format;
 	
-	/**
-	 * @var Command
-	 */
-	private $lastCommand = null;
 	
-	public function __construct(RequestReceiver $receiver, CommandFormat $format) {
-		$this->receiver = $receiver;
+	public function __construct(Subscriber $commandSubscriber, CommandFormat $format) {
+		$this->commandSubscriber = $commandSubscriber;
 		$this->format = $format;
 	}
 	
-	/**
-	 * Sets blocking mode for getNextCommand - will waits for next command
-	 * @return $this
-	 */
-	public function blockingMode() {
-		$this->blockingMode = true;
-		return $this;
+	public function getNext($wait = false) {
+		$commandData = $this->getCommandSubscriber()->receive($wait);
+		return ($commandData) ? $this->format->unmarshal($commandData['body']) : null;
 	}
 	
-	/**
-	 * @return $this
-	 */
-	public function nonBlockingMode() {
-		$this->blockingMode = false;
-		return $this;
-	}
-	
-	public function getNextCommand() {
-		if ($this->lastCommand) {
-			throw new CommandException(
-			  "Can't get next command, when reply for last wasn't sent, last command was: ".$this->lastCommand
-			);
-		}
-		
-		$commandData = $this->receiver->receiveRequest($this->isInBlockingMode());
-		$this->lastCommand = ($commandData) ? $this->format->unmarshal($commandData) : null;
-		return $this->lastCommand;
-	}
-	
-	public function sendCommandReply($reply) {
-		if ($this->lastCommand === null) {
-			throw new CommandException("Reply can be sent only when receive command");
-		}
-		$this->receiver->sendReply($reply, $this->isInBlockingMode());
-		$this->lastCommand = null;
-	}
-	
-	/**
-	 * @return bool
-	 */
-	public function isInBlockingMode() {
-		return $this->blockingMode;
-	}
-	
-	/**
-	 * Will close command input
-	 */
 	public function close() {
-		$this->receiver->unbind();
+		$this->getCommandSubscriber()->disconnect();
+	}
+	
+	/**
+	 * @return Subscriber
+	 */
+	public function getCommandSubscriber() {
+		return $this->commandSubscriber;
 	}
 }
