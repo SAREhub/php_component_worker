@@ -9,15 +9,10 @@ interface CommandInput {
 	
 	/**
 	 * Gets next command from input or returns null when no command.
-	 * @return Command|null
+	 * @param bool $wait
+	 * @return null|Command
 	 */
-	public function getNextCommand();
-	
-	/**
-	 * Sends reply for processed command
-	 * @param string $reply
-	 */
-	public function sendCommandReply($reply);
+	public function getNextCommand($wait = false);
 	
 	/**
 	 * Will close command input
