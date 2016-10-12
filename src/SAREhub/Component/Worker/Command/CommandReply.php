@@ -114,4 +114,11 @@ class CommandReply implements \JsonSerializable {
 		  'data' => $this->getData()
 		];
 	}
+	
+	/**
+	 * @return string
+	 */
+	public function toJson() {
+		return json_encode($this);
+	}
 }
