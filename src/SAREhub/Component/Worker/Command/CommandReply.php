@@ -7,6 +7,8 @@ class CommandReply implements \JsonSerializable {
 	const SUCCESS_STATUS = 'success';
 	const ERROR_STATUS = 'error';
 	
+	private $correlationId;
+	
 	/**
 	 * @var string
 	 */
@@ -22,11 +24,20 @@ class CommandReply implements \JsonSerializable {
 	 */
 	private $data;
 	
-	protected function __construct($status, $message, $data) {
+	/**
+	 * CommandReply constructor.
+	 * @param $correlationId
+	 * @param $status
+	 * @param $message
+	 * @param $data
+	 */
+	protected function __construct($correlationId, $status, $message, $data) {
+		$this->correlationId = $correlationId;
 		$this->status = $status;
 		$this->message = $message;
 		$this->data = $data;
 	}
+	
 	
 	/**
 	 * @param string $reply
@@ -41,37 +52,51 @@ class CommandReply implements \JsonSerializable {
 	 * @return CommandReply
 	 */
 	public static function createFromArray(array $reply) {
-		return new self($reply['status'], $reply['message'], $reply['data']);
+		return new self(
+		  $reply['correlation_id'],
+		  $reply['status'],
+		  $reply['message'],
+		  $reply['data']
+		);
 	}
 	
 	/**
+	 * @param $correlationId
 	 * @param string $message
 	 * @param mixed $data
 	 * @return CommandReply
 	 */
-	public static function success($message, $data = null) {
-		return self::reply(self::SUCCESS_STATUS, $message, $data);
+	public static function success($correlationId, $message, $data = null) {
+		return self::reply($correlationId, self::SUCCESS_STATUS, $message, $data);
 	}
 	
 	/**
+	 * @param $correlationId
 	 * @param string $message
 	 * @param mixed $data
 	 * @return CommandReply
 	 */
-	public static function error($message, $data = null) {
-		return self::reply(self::ERROR_STATUS, $message, $data);
+	public static function error($correlationId, $message, $data = null) {
+		return self::reply($correlationId, self::ERROR_STATUS, $message, $data);
 	}
 	
 	/**
+	 * @param string $correlationId
 	 * @param string $status
 	 * @param string $message
 	 * @param mixed $data
 	 * @return CommandReply
 	 */
-	public static function reply($status, $message, $data = null) {
-		return new self($status, $message, $data);
+	public static function reply($correlationId, $status, $message, $data = null) {
+		return new self($correlationId, $status, $message, $data);
 	}
 	
+	/**
+	 * @return string
+	 */
+	public function getCorrelationId() {
+		return $this->correlationId;
+	}
 	/**
 	 * @return string
 	 */
@@ -109,6 +134,7 @@ class CommandReply implements \JsonSerializable {
 	
 	public function jsonSerialize() {
 		return [
+		  'correlation_id' => $this->getCorrelationId(),
 		  'status' => $this->getStatus(),
 		  'message' => $this->getMessage(),
 		  'data' => $this->getData()
