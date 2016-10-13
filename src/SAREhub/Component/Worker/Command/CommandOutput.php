@@ -9,17 +9,12 @@ interface CommandOutput {
 	
 	/**
 	 * Sends command to output.
+	 * @param $topic
 	 * @param Command $command
-	 * @throws CommandException
+	 * @param bool $wait
+	 * @return
 	 */
-	public function sendCommand(Command $command);
-	
-	/**
-	 * Gets reply for sent command if available or return nulll.
-	 * @return string|null
-	 * @throws CommandException
-	 */
-	public function getCommandReply();
+	public function send($topic, Command $command, $wait = false);
 	
 	/**
 	 * Will close output of command
