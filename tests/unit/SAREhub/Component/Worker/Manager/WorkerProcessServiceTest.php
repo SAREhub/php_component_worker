@@ -24,40 +24,57 @@ class WorkerProcessServiceTest extends TestCase {
 		$this->factoryMock = $this->createMock(WorkerProcessFactory::class);
 		$this->process = $this->createMock(WorkerProcess::class);
 		$this->factoryMock->method('create')->willReturn($this->process);
-		$this->service = new WorkerProcessService($this->factoryMock);
+		$this->service = WorkerProcessService::newInstance()
+		  ->withWorkerProcessFactory($this->factoryMock);
 		
 	}
 	
-	public function testRegister() {
-		$this->service->register('uuid');
-		$this->assertTrue($this->service->has('uuid'));
+	public function testRegisterThenHasWorker() {
+		$this->service->registerWorker('worker');
+		$this->assertTrue($this->service->hasWorker('worker'));
 	}
 	
-	public function testRegisterWhenExists() {
-		$this->service->register('uuid');
+	public function testRegisterThenCreateProcess() {
+		$this->factoryMock->expects($this->once())->method('create')->willReturn($this->process);
+		$this->service->registerWorker('worker');
+	}
+	
+	public function testRegisterThenProcessStart() {
+		$this->process->expects($this->once())->method('start');
+		$this->service->registerWorker('worker');
+	}
+	
+	public function testRegisterWhenWorkerExistsThenNotCreateProcess() {
+		$this->service->registerWorker('worker');
 		$this->factoryMock->expects($this->never())->method('create');
-		$this->assertTrue($this->service->has('uuid'));
+		$this->service->registerWorker('worker');
+	}
+	
+	public function testRegisterWhenWorkerExistsThenHasOld() {
+		$this->service->registerWorker('worker');
+		$this->service->registerWorker('worker');
+		$this->assertTrue($this->service->hasWorker('worker'));
 	}
 	
 	public function testUnregisterWhenExists() {
-		$this->service->register('worker');
-		$this->service->unregister('worker');
-		$this->assertFalse($this->service->has('worker'));
-	}
-	
-	public function testStartWhenExists() {
-		$this->service->register('id');
-		$this->process->expects($this->once())->method('start');
-		$this->service->start('id');
+		$this->service->registerWorker('worker');
+		$this->service->unregisterWorker('worker');
+		$this->assertFalse($this->service->hasWorker('worker'));
 	}
 	
 	public function testKillWhenExists() {
-		$this->service->register('id');
+		$this->service->registerWorker('id');
 		$this->process->expects($this->once())->method('kill');
-		$this->service->kill('id');
+		$this->service->killWorker('id');
 	}
 	
-	public function testHasWhenNotExists() {
-		$this->assertFalse($this->service->has('not_exists'));
+	public function testHasWhenNotExistsThenReturnFalse() {
+		$this->assertFalse($this->service->hasWorker('not_exists'));
+	}
+	
+	public function testGetWorkerPidWhenExistsThenReturnPid() {
+		$this->service->registerWorker('worker');
+		$this->process->method('getPid')->willReturn(1000);
+		$this->assertEquals(1000, $this->service->getWorkerPid('worker'));
 	}
 }

@@ -2,13 +2,9 @@
 
 namespace SAREhub\Component\Worker\Manager;
 
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use SAREhub\Component\Worker\Service\ServiceSupport;
 
-class WorkerProcessService implements LoggerAwareInterface {
-	
-	private $logger;
+class WorkerProcessService extends ServiceSupport {
 	
 	/**
 	 * @var WorkerProcessFactory
@@ -20,80 +16,103 @@ class WorkerProcessService implements LoggerAwareInterface {
 	 */
 	private $processList = [];
 	
-	public function __construct(WorkerProcessFactory $factory) {
-		$this->processFactory = $factory;
-		$this->logger = new NullLogger();
+	protected function __construct() {
 	}
 	
 	/**
-	 * @param string $id
+	 * @return WorkerProcessService
+	 */
+	public static function newInstance() {
+		return new self();
+	}
+	
+	/**
+	 * @param WorkerProcessFactory $factory
+	 * @return $this
+	 */
+	public function withWorkerProcessFactory(WorkerProcessFactory $factory) {
+		$this->processFactory = $factory;
+		return $this;
+	}
+	
+	protected function doStart() {
+		
+	}
+	
+	protected function doTick() {
+	}
+	
+	
+	protected function doStop() {
+		
+	}
+	/**
+	 * @param string $workerId
 	 * @return WorkerProcess
 	 */
-	public function register($id) {
-		if (!$this->has($id)) {
-			$process = $this->processFactory->create($id);
-			$this->processList[$id] = $process;
-			$this->getLogger()->info('registered worker process: '.$id);
-			return $process;
-		}
-	}
-	
-	/**
-	 * @param string $id
-	 */
-	public function unregister($id) {
-		if ($this->has($id)) {
-			unset($this->processList[$id]);
-			$this->getLogger()->info('unregistered worker process: '.$id);
-		}
-	}
-	
-	public function start($id) {
-		if ($process = $this->get($id)) {
+	public function registerWorker($workerId) {
+		if (!$this->hasWorker($workerId)) {
+			$this->getLogger()->info("$workerId registering");
+			$process = $this->processFactory->create($workerId);
 			$process->start();
-			$this->getLogger()->info('started worker process: '.$id);
+			$this->processList[$workerId] = $process;
+			$this->getLogger()->info("$workerId registered with PID: ".$process->getPid());
 		}
-	}
-	
-	public function kill($id) {
-		if ($process = $this->get($id)) {
-			$process->kill();
-			$this->getLogger()->info('killed worker process: '.$id);
-		}
+		
+		$this->getLogger()->info("$workerId registered before");
 	}
 	
 	/**
-	 * @param string $id
+	 * @param string $workerId
+	 */
+	public function unregisterWorker($workerId) {
+		if ($this->hasWorker($workerId)) {
+			unset($this->processList[$workerId]);
+			$this->getLogger()->info("$workerId unregistered");
+		}
+	}
+	
+	public function killWorker($workerId) {
+		if ($process = $this->get($workerId)) {
+			$process->kill();
+			$this->getLogger()->info("worker process: $workerId killed");
+		}
+	}
+	
+	public function getWorkerPid($workerId) {
+		if ($process = $this->get($workerId)) {
+			return $process->getPid();
+		}
+		
+		return 0;
+	}
+	/**
+	 * @param string $workerId
 	 * @return null|WorkerProcess
 	 */
-	protected function get($id) {
-		return $this->has($id) ? $this->processList[$id] : null;
+	protected function get($workerId) {
+		return $this->hasWorker($workerId) ? $this->processList[$workerId] : null;
 	}
 	
 	/**
-	 * @param $id
+	 * @param $workerId
 	 * @return boolean
 	 */
-	public function isWorkerRunning($id) {
-		return $this->get($id)->isRunning();
+	public function isWorkerRunning($workerId) {
+		if ($process = $this->get($workerId)) {
+			return $process->isRunning();
+		}
+		
+		return false;
 	}
 	
 	/**
 	 * @param string $id
 	 * @return bool
 	 */
-	public function has($id) {
+	public function hasWorker($id) {
 		return isset($this->processList[$id]);
 	}
 	
-	/**
-	 * @return LoggerInterface
-	 */
-	public function getLogger() {
-		return $this->logger;
-	}
 	
-	public function setLogger(LoggerInterface $logger) {
-		$this->logger = $logger;
-	}
 }
