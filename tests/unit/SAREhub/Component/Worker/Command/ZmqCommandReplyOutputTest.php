@@ -18,25 +18,25 @@ class ZmqCommandReplyOutputTest extends TestCase {
 	private $output;
 	
 	private $topic = 'reply';
+	private $reply;
 	
 	protected function setUp() {
 		parent::setUp();
 		$this->publisher = $this->createMock(Publisher::class);
-		$this->output = new ZmqCommandReplyOutput($this->publisher);
+		$this->output = new ZmqCommandReplyOutput($this->publisher, $this->topic);
+		$this->reply = CommandReply::success("id", "reply");
 	}
 	
 	public function testSendThenPublisherPublish() {
-		$reply = CommandReply::success("id", "reply");
 		$this->publisher->expects($this->once())->method('publish')
-		  ->with($this->topic, $reply->toJson(), false);
-		$this->output->send($this->topic, $reply);
+		  ->with($this->topic, $this->reply->toJson(), false);
+		$this->output->send($this->reply);
 	}
 	
 	public function testSendWhenWaitThenPublisherPublishWithWait() {
-		$reply = CommandReply::success("id", "reply");
 		$this->publisher->expects($this->once())->method('publish')
-		  ->with($this->topic, $reply->toJson(), true);
-		$this->output->send($this->topic, $reply, true);
+		  ->with($this->topic, $this->reply->toJson(), true);
+		$this->output->send($this->reply, true);
 	}
 	
 	public function testClose() {
