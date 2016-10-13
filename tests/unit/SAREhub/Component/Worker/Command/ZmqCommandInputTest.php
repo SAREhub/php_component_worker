@@ -45,7 +45,7 @@ class ZmqCommandInputTest extends TestCase {
 	}
 	
 	public function testGetNextWhenCommandThenReturnCommand() {
-		$command = new BasicCommand("test");
+		$command = new BasicCommand('1', "test");
 		$this->subscriberMock->method('receive')->willReturn($this->commandData);
 		$this->commandFormatMock->method('unmarshal')->willReturn($command);
 		$this->assertSame($command, $this->commandInput->getNext());
