@@ -1,12 +1,12 @@
 <?php
 
-use Guzzle\Service\Exception\CommandException;
 use PHPUnit\Framework\TestCase;
 use SAREhub\Commons\Misc\TimeProvider;
 use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\CommandOutput;
-use SAREhub\Component\Worker\Command\CommandOutputFactory;
 use SAREhub\Component\Worker\Command\CommandReply;
+use SAREhub\Component\Worker\Command\CommandReplyInput;
+use SAREhub\Component\Worker\Manager\WorkerCommandRequest;
 use SAREhub\Component\Worker\Manager\WorkerCommandService;
 
 class WorkerCommandServiceTest extends TestCase {
@@ -14,96 +14,125 @@ class WorkerCommandServiceTest extends TestCase {
 	/**
 	 * @var PHPUnit_Framework_MockObject_MockObject
 	 */
-	private $factoryMock;
+	private $outputMock;
 	
 	/**
 	 * @var PHPUnit_Framework_MockObject_MockObject
 	 */
-	private $outputMock;
+	private $inputMock;
 	
 	/**
 	 * @var WorkerCommandService
 	 */
 	private $service;
 	
+	/**
+	 * @var WorkerCommandRequest
+	 */
+	private $request;
+	
 	protected function setUp() {
 		parent::setUp();
-		$this->factoryMock = $this->createMock(CommandOutputFactory::class);
 		$this->outputMock = $this->createMock(CommandOutput::class);
-		$this->factoryMock->method('create')->willReturn($this->outputMock);
-		$this->service = new WorkerCommandService($this->factoryMock);
-	}
-	
-	public function testRegisterWhenNotExists() {
-		$this->factoryMock->expects($this->once())->method('create')
-		  ->with('id')->willReturn($this->outputMock);
-		$this->service->register('id');
-		$this->assertTrue($this->service->has('id'));
-	}
-	
-	public function testRegisterWhenExists() {
-		$this->service->register('id');
-		$this->factoryMock->expects($this->never())->method('create');
-		$this->service->register('id');
-		$this->assertTrue($this->service->has('id'));
-	}
-	
-	public function testUnregisterWhenExists() {
-		$this->service->register('id');
-		$this->outputMock->expects($this->once())->method('close');
-		$this->service->unregister('id');
-		$this->assertFalse($this->service->has('id'));
-	}
-	
-	public function testHasWhenNotExists() {
-		$this->assertFalse($this->service->has('not_exists'));
-	}
-	
-	public function testSendCommandWhenExists() {
-		$this->service->register('id');
-		$command = new BasicCommand('c');
-		$this->outputMock->expects($this->once())->method('sendCommand')
-		  ->with($this->identicalTo($command));
-		$this->outputMock->expects($this->once())->method('getCommandReply')
-		  ->willReturn(json_encode(CommandReply::success('m')));
+		$this->inputMock = $this->createMock(CommandReplyInput::class);
+		$this->service = WorkerCommandService::newInstance()
+		  ->withCommandOutput($this->outputMock)
+		  ->withCommandReplyInput($this->inputMock);
 		
-		$reply = $this->service->sendCommand('id', $command);
-		$this->assertEquals('m', $reply->getMessage());
+		$this->service->start();
+		
+		$this->request = WorkerCommandRequest::newInstance()
+		  ->withWorkerId('worker1')
+		  ->withCommand(new BasicCommand('1', 'c'))
+		  ->withReplyCallback($this->createPartialMock(stdClass::class, ['__invoke']));
 	}
 	
-	public function testSendCommandWhenNotExists() {
-		$command = new BasicCommand('c');
-		$this->outputMock->expects($this->never())->method('sendCommand');
-		$this->outputMock->expects($this->never())->method('getCommandReply');
-		$reply = $this->service->sendCommand('id', $command);
-		$this->assertEquals('worker not exists', $reply->getMessage());
-	}
-	
-	public function testSendCommandWhenReplyTimeout() {
-		$this->service->register('id');
-		$command = new BasicCommand('c');
-		$this->outputMock->expects($this->once())->method('getCommandReply');
-		TimeProvider::get()->freezeTime();
-		$reply = $this->service->sendCommand('id', $command, 0);
-		$this->assertEquals('reply timeout', $reply->getMessage());
+	protected function tearDown() {
+		parent::tearDown();
 		TimeProvider::get()->unfreezeTime();
 	}
 	
-	public function testSendCommandWhenSendCommandException() {
-		$this->service->register('id');
-		$command = new BasicCommand('c');
-		$this->outputMock->method('sendCommand')
-		  ->willThrowException(new CommandException('m'));
-		$reply = $this->service->sendCommand('id', $command);
-		$this->assertEquals('m', $reply->getMessage());
+	public function testProcessThenOutputSend() {
+		$this->outputMock->expects($this->once())->method('send')
+		  ->with(
+			$this->request->getWorkerId(),
+			$this->request->getCommand(),
+			false
+		  );
+		$this->service->process($this->request);
 	}
 	
-	public function testSendCommandWhenGetCommandReplyException() {
-		$this->service->register('id');
-		$command = new BasicCommand('c');
-		$this->outputMock->method('sendCommand')
-		  ->willThrowException(new CommandException('m'));
-		$reply = $this->service->sendCommand('id', $command);
-		$this->assertEquals('m', $reply->getMessage());
+	public function testProcessThenRequestIsSent() {
+		$this->service->process($this->request);
+		$this->assertTrue($this->request->isSent());
+	}
+	
+	public function testProcessThenRequestSentTimeIsNow() {
+		TimeProvider::get()->freezeTime();
+		$this->service->process($this->request);
+		$this->assertEquals(TimeProvider::get()->now(), $this->request->getSentTime());
+	}
+	
+	public function testProcessThenPendingRequest() {
+		$this->service->process($this->request);
+		$this->assertEquals([$this->request], $this->service->getPendingRequests());
+	}
+	
+	public function testProcessWhenSendExceptionThenCallReplyCallbackWithErrorReply() {
+		$this->outputMock->method('send')->willThrowException(new \Exception('m'));
+		$this->request->getReplyCallback()->expects($this->once())->method('__invoke')
+		  ->with($this->request, $this->callback(function (CommandReply $reply) {
+			  return $reply->isError();
+		  }));
+		$this->service->process($this->request);
+	}
+	
+	public function testProcessWhenSendExceptionThenNotPendingRequest() {
+		$this->outputMock->method('send')->willThrowException(new \Exception('m'));
+		$this->service->process($this->request);
+		$this->assertEmpty($this->service->getPendingRequests());
+	}
+	
+	public function testProcessWhenSendExceptionThenNotSent() {
+		$this->outputMock->method('send')->willThrowException(new \Exception('m'));
+		$this->service->process($this->request);
+		$this->assertFalse($this->request->isSent());
+	}
+	
+	public function testDoTickWhenReplyThenCallReplyCallback() {
+		$this->service->process($this->request);
+		$reply = CommandReply::success(
+		  $this->request->getCommand()->getCorrelationId(),
+		  'm'
+		);
+		
+		$this->inputMock->method('getNext')->willReturn($reply);
+		$this->request->getReplyCallback()->expects($this->once())->method('__invoke')
+		  ->with($this->request, $reply);
+		$this->service->tick();
+	}
+	
+	public function testDoTickWhenReplyNotCorrelatedThenIgnore() {
+		$reply = CommandReply::success(
+		  $this->request->getCommand()->getCorrelationId(),
+		  'm'
+		);
+		
+		$this->inputMock->method('getNext')->willReturn($reply);
+		$this->request->getReplyCallback()->expects($this->never())->method('__invoke');
+		$this->service->tick();
+	}
+	
+	public function testDoTickWhenRequestReplyTimeoutThenCallReplyCallbackWithErrorReply() {
+		$now = time();
+		TimeProvider::get()->freezeTime($now);
+		$this->service->process($this->request);
+		TimeProvider::get()->freezeTime($now + $this->request->getReplyTimeout());
+		
+		$this->request->getReplyCallback()->expects($this->once())->method('__invoke')
+		  ->with($this->request, $this->callback(function (CommandReply $reply) {
+			  return $reply->isError();
+		  }));
+		$this->service->tick();
 	}
 }

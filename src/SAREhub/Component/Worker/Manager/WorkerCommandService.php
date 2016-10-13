@@ -2,85 +2,88 @@
 
 namespace SAREhub\Component\Worker\Manager;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use SAREhub\Commons\Misc\TimeProvider;
-use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandOutput;
-use SAREhub\Component\Worker\Command\CommandOutputFactory;
 use SAREhub\Component\Worker\Command\CommandReply;
+use SAREhub\Component\Worker\Command\CommandReplyInput;
 use SAREhub\Component\Worker\Service\ServiceSupport;
 
 class WorkerCommandService extends ServiceSupport {
 	
-	const DEFAULT_COMMAND_REPLY_TIMEOUT = 30;
+	/**
+	 * @var CommandOutput
+	 */
+	private $commandOutput;
 	
 	/**
-	 * @var LoggerInterface
+	 * @var CommandReplyInput
 	 */
-	private $logger;
+	private $commandReplyInput;
 	
 	/**
-	 * @var CommandOutputFactory
+	 * @var WorkerCommandRequest[]
 	 */
-	private $outputFactory;
+	private $pendingRequests = [];
 	
-	/**
-	 * @var CommandOutput[]
-	 */
-	private $outputList = [];
 	
-	public function __construct(CommandOutputFactory $factory) {
-		$this->outputFactory = $factory;
-		$this->logger = new NullLogger();
+	protected function __construct() {
 	}
 	
 	/**
-	 * @param string $id
+	 * @return WorkerCommandService
 	 */
-	public function register($id) {
-		if (!$this->has($id)) {
-			$this->outputList[$id] = $this->outputFactory->create($id);
+	public static function newInstance() {
+		return new self();
+	}
+	
+	/**
+	 * @param CommandOutput $output
+	 * @return $this
+	 */
+	public function withCommandOutput(CommandOutput $output) {
+		$this->commandOutput = $output;
+		return $this;
+	}
+	
+	/**
+	 * @param CommandReplyInput $input
+	 * @return $this
+	 */
+	public function withCommandReplyInput(CommandReplyInput $input) {
+		$this->commandReplyInput = $input;
+		return $this;
+	}
+	
+	public function process(WorkerCommandRequest $request) {
+		$this->getLogger()->info('sending command request', ['request' => $request]);
+		try {
+			$this->commandOutput->send($request->getWorkerId(), $request->getCommand(), false);
+			$request->markAsSent(TimeProvider::get()->now());
+			$this->pendingRequests[] = $request;
+		} catch (\Exception $e) {
+			$this->onRequestException($request, $e);
 		}
 	}
 	
 	/**
-	 * @param string $id
+	 * @return WorkerCommandRequest[]
 	 */
-	public function unregister($id) {
-		if ($output = $this->get($id)) {
-			$output->close();
-			unset($this->outputList[$id]);
-		}
+	public function getPendingRequests() {
+		return $this->pendingRequests;
 	}
 	
 	/**
-	 * @param string $id
-	 * @param Command $command
-	 * @param int $replyTimeout
-	 * @return CommandReply
+	 * @return CommandOutput
 	 */
-	public function sendCommand($id, Command $command, $replyTimeout = self::DEFAULT_COMMAND_REPLY_TIMEOUT) {
-		if ($output = $this->get($id)) {
-			try {
-				$output->sendCommand($command);
-				$timeoutTime = TimeProvider::get()->now() + $replyTimeout;
-				while (true) {
-					if ($reply = $output->getCommandReply()) {
-						return CommandReply::createFromJson($reply);
-					}
-					
-					if (TimeProvider::get()->now() >= $timeoutTime) {
-						return CommandReply::error('reply timeout');
-					}
-				}
-			} catch (\Exception $e) {
-				$this->logger->error($e);
-				return CommandReply::error($e->getMessage());
-			}
-		}
-		
-		return CommandReply::error('worker not exists', $id);
+	public function getCommandOutput() {
+		return $this->commandOutput;
+	}
+	
+	/**
+	 * @return CommandReplyInput
+	 */
+	public function getCommandReplyInput() {
+		return $this->commandReplyInput;
 	}
 	
 	protected function doStart() {
@@ -88,33 +91,57 @@ class WorkerCommandService extends ServiceSupport {
 	}
 	
 	protected function doTick() {
+		if ($reply = $this->getCommandReplyInput()->getNext()) {
+			$this->getLogger()->info('got reply', ['reply' => $reply]);
+			if ($request = $this->getCorrelatedPendingRequest($reply)) {
+				$this->getLogger()->info('exists correlated command',
+				  ['request' => $request],
+				  ['reply' => $reply]
+				);
+				($request->getReplyCallback())($request, $reply);
+			}
+			$this->getLogger()->info('not exists correlated command for reply', ['reply' => $reply]);
+		}
 		
+		$this->checkReplyTimeout();
 	}
 	
 	protected function doStop() {
-		foreach ($this->outputList as $id => $output) {
-			$this->unregister($id);
+	}
+	
+	private function onRequestException(WorkerCommandRequest $request, \Exception $exception) {
+		$this->getLogger()->error($exception, ['request' => $request]);
+		$reply = CommandReply::error(
+		  $request->getCommand()->getCorrelationId(),
+		  'exception when send command',
+		  ['exceptionMessage' => $exception->getMessage()]
+		);
+		($request->getReplyCallback())($request, $reply);
+	}
+	
+	/**
+	 * @param CommandReply $reply
+	 * @return null|WorkerCommandRequest
+	 */
+	private function getCorrelatedPendingRequest(CommandReply $reply) {
+		foreach ($this->getPendingRequests() as $request) {
+			if ($reply->getCorrelationId() === $request->getCommand()->getCorrelationId()) {
+				return $request;
+			}
 		}
+		
+		return null;
 	}
 	
-	
-	/**
-	 * @param string $id
-	 * @return null|CommandOutput
-	 */
-	protected function get($id) {
-		return $this->has($id) ? $this->outputList[$id] : null;
-	}
-	
-	/**
-	 * @param string $id
-	 * @return bool
-	 */
-	public function has($id) {
-		return isset($this->outputList[$id]);
-	}
-	
-	public function setLogger(LoggerInterface $logger) {
-		$this->logger = $logger;
+	private function checkReplyTimeout() {
+		foreach ($this->getPendingRequests() as $request) {
+			if ($request->isReplyTimeout(TimeProvider::get()->now())) {
+				$reply = CommandReply::error(
+				  $request->getCommand()->getCorrelationId(),
+				  'reply timeout'
+				);
+				($request->getReplyCallback())($request, $reply);
+			}
+		}
 	}
 }
