@@ -21,7 +21,6 @@ class WorkerProcess {
 		$this->process = $process;
 	}
 	
-	
 	/**
 	 * Starts worker process.
 	 */
@@ -36,10 +35,19 @@ class WorkerProcess {
 		$this->process->stop();
 	}
 	
+	/**
+	 * @return bool
+	 */
 	public function isRunning() {
 		return $this->process->isRunning();
 	}
 	
+	/**
+	 * @return int|null
+	 */
+	public function getPid() {
+		return $this->process->getPid();
+	}
 	/**
 	 * @return string
 	 */
