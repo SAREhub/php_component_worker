@@ -6,12 +6,12 @@ interface CommandReplyOutput {
 	
 	/**
 	 * Sends reply for command
-	 * @param Command $command
+	 * @param string $topic
 	 * @param CommandReply $reply
 	 * @param bool $wait
 	 * @return
 	 */
-	public function send(Command $command, CommandReply $reply, $wait = false);
+	public function send($topic, CommandReply $reply, $wait = false);
 	
 	/**
 	 * Will close command input

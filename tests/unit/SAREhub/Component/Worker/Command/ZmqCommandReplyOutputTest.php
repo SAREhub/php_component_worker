@@ -2,7 +2,6 @@
 
 use PHPUnit\Framework\TestCase;
 use SAREhub\Commons\Zmq\PublishSubscribe\Publisher;
-use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\CommandReply;
 use SAREhub\Component\Worker\Command\ZmqCommandReplyOutput;
 
@@ -23,21 +22,21 @@ class ZmqCommandReplyOutputTest extends TestCase {
 	protected function setUp() {
 		parent::setUp();
 		$this->publisher = $this->createMock(Publisher::class);
-		$this->output = new ZmqCommandReplyOutput($this->publisher, $this->topic);
+		$this->output = new ZmqCommandReplyOutput($this->publisher);
 	}
 	
 	public function testSendThenPublisherPublish() {
-		$reply = CommandReply::success("reply");
+		$reply = CommandReply::success("id", "reply");
 		$this->publisher->expects($this->once())->method('publish')
 		  ->with($this->topic, $reply->toJson(), false);
-		$this->output->send(new BasicCommand("name"), $reply);
+		$this->output->send($this->topic, $reply);
 	}
 	
 	public function testSendWhenWaitThenPublisherPublishWithWait() {
-		$reply = CommandReply::success("reply");
+		$reply = CommandReply::success("id", "reply");
 		$this->publisher->expects($this->once())->method('publish')
 		  ->with($this->topic, $reply->toJson(), true);
-		$this->output->send(new BasicCommand("name"), $reply, true);
+		$this->output->send($this->topic, $reply, true);
 	}
 	
 	public function testClose() {
