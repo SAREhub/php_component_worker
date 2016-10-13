@@ -7,30 +7,35 @@ use SAREhub\Component\Worker\Command\JsonCommandFormat;
 
 class JsonCommandFormatTest extends TestCase {
 	
-	public function testMarshal() {
-		$command = new BasicCommand('name1', ['param1' => 'value']);
-		$expectedJson = json_encode(
-		  [
-			'name' => 'name1',
-			'parameters' => [
-			  'param1' => 'value'
-			]
-		  ]);
+	private $commandJson;
+	
+	/**
+	 * @var JsonCommandFormat
+	 */
+	private $format;
+	
+	protected function setUp() {
+		parent::setUp();
+		$this->commandJson = json_encode([
+		  JsonCommandFormat::CORRELATION_ID_INDEX => '1',
+		  JsonCommandFormat::NAME_INDEX => 'name1',
+		  JsonCommandFormat::PARAMETERS_INDEX => [
+			'param1' => 'value'
+		  ]
+		]);
 		
-		$this->assertEquals($expectedJson, JsonCommandFormat::newInstance()->marshal($command));
+		$this->format = JsonCommandFormat::newInstance();
+	}
+	
+	public function testMarshal() {
+		$command = new BasicCommand('1', 'name1', ['param1' => 'value']);
+		$this->assertEquals($this->commandJson, $this->format->marshal($command));
 	}
 	
 	public function testUnmarshal() {
-		$command = JsonCommandFormat::newInstance()->unmarshal(json_encode(
-		  [
-			'name' => 'name1',
-			'parameters' => [
-			  'param1' => 1
-			]
-		  ]
-		));
-		
+		$command = $this->format->unmarshal($this->commandJson);
+		$this->assertEquals('1', $command->getCorrelationId());
 		$this->assertEquals('name1', $command->getName());
-		$this->assertEquals(['param1' => 1], $command->getParameters());
+		$this->assertEquals(['param1' => 'value'], $command->getParameters());
 	}
 }

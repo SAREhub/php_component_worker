@@ -7,6 +7,8 @@ namespace SAREhub\Component\Worker\Command;
  */
 interface Command {
 	
+	public function getCorrelationId();
+	
 	/**
 	 * @return string
 	 */

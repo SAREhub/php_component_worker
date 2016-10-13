@@ -7,12 +7,21 @@ namespace SAREhub\Component\Worker\Command;
  */
 class BasicCommand implements Command {
 	
+	private $correlationId;
 	private $name;
 	private $parameters;
 	
-	public function __construct($name, array $parameters = null) {
+	public function __construct($correlationId, $name, array $parameters = null) {
+		$this->correlationId = $correlationId;
 		$this->name = $name;
 		$this->parameters = empty($parameters) ? [] : $parameters;
+	}
+	
+	/**
+	 * @return string
+	 */
+	public function getCorrelationId() {
+		return $this->correlationId;
 	}
 	
 	/**
@@ -31,6 +40,7 @@ class BasicCommand implements Command {
 	
 	public function __toString() {
 		return 'COMMAND:'.json_encode([
+		  'correlation_id' => $this->getCorrelationId(),
 		  'name' => $this->getName(),
 		  'parameters' => $this->getParameters()
 		]);
