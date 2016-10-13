@@ -33,28 +33,30 @@ class BasicWorkerTest extends TestCase {
 	 */
 	private $worker;
 	
+	private $command;
+	
 	protected function setUp() {
 		parent::setUp();
 		$this->worker = $this->createPartialMock(TestBasicWorker::class, ['doCommand']);
+		$this->command = new BasicCommand('1', 'test');
 	}
 	
 	public function testProcessCommandThenDoCommand() {
 		$spy = $this->getMethodSpy('doCommand');
-		$this->worker->processCommand(new BasicCommand('test'));
+		$this->worker->processCommand($this->command);
 		$this->assertEquals(1, $spy->getInvocationCount());
 	}
 	
 	public function testProcessCommandThenDoCommandWithCommandParameter() {
 		$spy = $this->getMethodSpy('doCommand');
-		$command = new BasicCommand('test');
-		$this->worker->processCommand($command);
-		$this->assertSame($command, $spy->getInvocations()[0]->parameters[0]);
+		$this->worker->processCommand($this->command);
+		$this->assertSame($this->command, $spy->getInvocations()[0]->parameters[0]);
 	}
 	
 	public function testProcessCommandThenReturnReply() {
-		$expectedReply = CommandReply::success('r');
+		$expectedReply = CommandReply::success('1', 'r');
 		$this->worker->expects($this->once())->method('doCommand')->willReturn($expectedReply);
-		$this->assertSame($expectedReply, $this->worker->processCommand(new BasicCommand('test')));
+		$this->assertSame($expectedReply, $this->worker->processCommand($this->command));
 	}
 	
 	private function getMethodSpy($method) {

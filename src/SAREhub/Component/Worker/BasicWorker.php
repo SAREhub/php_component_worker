@@ -27,7 +27,6 @@ abstract class BasicWorker extends ServiceSupport implements Worker {
 	
 	/**
 	 * Contains custom command processing logic.
-	 *
 	 * @param Command $command
 	 * @throws WorkerException When something was wrong.
 	 */
