@@ -3,7 +3,6 @@
 namespace SAREhub\Component\Worker;
 
 use SAREhub\Component\Worker\Command\Command;
-use SAREhub\Component\Worker\Command\CommandReply;
 use SAREhub\Component\Worker\Service\Service;
 
 /**
@@ -14,9 +13,9 @@ interface Worker extends Service {
 	/**
 	 * Executed when command was received.
 	 * @param Command $command
-	 * @return CommandReply command reply
+	 * @param callable $replyCallback
 	 */
-	public function processCommand(Command $command);
+	public function processCommand(Command $command, callable $replyCallback);
 	
 	/**
 	 * @return string

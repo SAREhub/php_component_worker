@@ -20,9 +20,9 @@ abstract class BasicWorker extends ServiceSupport implements Worker {
 		$this->context = $context;
 	}
 	
-	public function processCommand(Command $command) {
+	public function processCommand(Command $command, callable $replyCallback) {
 		$this->getLogger()->info('execute command: '.$command);
-		return $this->doCommand($command);
+		return $this->doCommand($command, $replyCallback);
 	}
 	
 	/**
@@ -30,7 +30,7 @@ abstract class BasicWorker extends ServiceSupport implements Worker {
 	 * @param Command $command
 	 * @throws WorkerException When something was wrong.
 	 */
-	protected abstract function doCommand(Command $command);
+	protected abstract function doCommand(Command $command, callable $replyCallback);
 	
 	public function getId() {
 		return $this->getContext()->getId();

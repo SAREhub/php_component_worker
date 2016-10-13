@@ -31,7 +31,8 @@ class WorkerRunnerTest extends TestCase {
 		$this->workerRunner->tick();
 	}
 	
-	public function testStop() {
+	public function testStopWhenStarted() {
+		$this->workerRunner->start();
 		$this->workerMock->expects($this->once())->method('stop');
 		$this->commandInputMock->expects($this->once())->method('close');
 		$this->commandReplyOutputMock->expects($this->once())->method('close');
@@ -57,17 +58,6 @@ class WorkerRunnerTest extends TestCase {
 		$command = new BasicCommand('1', 'c');
 		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn($command);
 		$this->workerMock->method('processCommand')->willThrowException(new \Exception('m'));
-		$this->commandReplyOutputMock->expects($this->once())->method('send')
-		  ->with($this->callback(function (CommandReply $reply) {
-			  return $reply->getMessage() === 'exception when execute command';
-		  }));
-		$this->workerRunner->tick();
-	}
-	
-	public function testTickWhenProcessCommandEmptyReply() {
-		$command = new BasicCommand('1', 'c');
-		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn($command);
-		$this->workerMock->method('processCommand')->willReturn(null);
 		$this->commandReplyOutputMock->expects($this->once())->method('send')
 		  ->with($this->callback(function (CommandReply $reply) {
 			  return $reply->getMessage() === 'exception when execute command';

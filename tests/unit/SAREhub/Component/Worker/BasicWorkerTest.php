@@ -5,7 +5,6 @@ use PHPUnit\Framework\TestCase;
 use SAREhub\Component\Worker\BasicWorker;
 use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\Command;
-use SAREhub\Component\Worker\Command\CommandReply;
 
 class TestBasicWorker extends BasicWorker {
 	
@@ -21,7 +20,7 @@ class TestBasicWorker extends BasicWorker {
 		
 	}
 	
-	protected function doCommand(Command $command) {
+	protected function doCommand(Command $command, callable $replyCallback) {
 		
 	}
 }
@@ -43,20 +42,14 @@ class BasicWorkerTest extends TestCase {
 	
 	public function testProcessCommandThenDoCommand() {
 		$spy = $this->getMethodSpy('doCommand');
-		$this->worker->processCommand($this->command);
+		$this->worker->processCommand($this->command, function () { });
 		$this->assertEquals(1, $spy->getInvocationCount());
 	}
 	
 	public function testProcessCommandThenDoCommandWithCommandParameter() {
 		$spy = $this->getMethodSpy('doCommand');
-		$this->worker->processCommand($this->command);
+		$this->worker->processCommand($this->command, function () { });
 		$this->assertSame($this->command, $spy->getInvocations()[0]->parameters[0]);
-	}
-	
-	public function testProcessCommandThenReturnReply() {
-		$expectedReply = CommandReply::success('1', 'r');
-		$this->worker->expects($this->once())->method('doCommand')->willReturn($expectedReply);
-		$this->assertSame($expectedReply, $this->worker->processCommand($this->command));
 	}
 	
 	private function getMethodSpy($method) {
