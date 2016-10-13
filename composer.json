@@ -13,11 +13,13 @@
     "phpunit/phpunit": "5.*",
     "codeclimate/php-test-reporter": "dev-master",
     "fig-r/psr2r-sniffer": "0.*",
-    "phpdocumentor/phpdocumentor": "2.*"
+    "phpdocumentor/phpdocumentor": "2.9.*"
   },
   "require": {
     "php": "^7.0",
+    "monolog/monolog": "1.9.*",
     "symfony/process": "3.1.3 as 2.8.9",
+    "symfony/console": "3.1.5 as 2.3.28",
     "sarehub/commons": "0.5.*",
     "respect/validation": "1.1.*"
   },
