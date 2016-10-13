@@ -93,7 +93,7 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 	 * Gets logger assigned to that object.
 	 * @return LoggerInterface
 	 */
-	protected function getLogger() {
+	public function getLogger() {
 		if ($this->logger === null) {
 			$this->logger = new NullLogger();
 		}
