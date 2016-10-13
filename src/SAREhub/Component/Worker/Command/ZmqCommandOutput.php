@@ -2,69 +2,39 @@
 
 namespace SAREhub\Component\Worker\Command;
 
-use SAREhub\Commons\Zmq\RequestReply\RequestSender;
+use SAREhub\Commons\Zmq\PublishSubscribe\Publisher;
 
 class ZmqCommandOutput implements CommandOutput {
 	
-	private $sender;
-	private $blockingMode = false;
+	/**
+	 * @var Publisher
+	 */
+	private $publisher;
+	
+	/**
+	 * @var CommandFormat
+	 */
 	private $format;
 	
-	public function __construct(RequestSender $sender, CommandFormat $format) {
-		$this->sender = $sender;
+	public function __construct(Publisher $publisher, CommandFormat $format) {
+		$this->publisher = $publisher;
 		$this->format = $format;
 	}
 	
-	/**
-	 * @return $this
-	 */
-	public function blockingMode() {
-		$this->blockingMode = true;
-		return $this;
-	}
-	
-	/**
-	 * @return $this
-	 */
-	public function nonBlockingMode() {
-		$this->blockingMode = true;
-		return $this;
-	}
-	
-	public function sendCommand(Command $command) {
+	public function send($topic, Command $command, $wait = false) {
 		$commandData = $this->format->marshal($command);
-		try {
-			$this->sender->sendRequest($commandData, $this->isInBlockingMode());
-		} catch (\ZMQException $e) {
-			throw new CommandException("send command: ".$command, 0, $e);
-		}
+		$this->getPublisher()->publish($topic, $commandData, $wait);
 	}
 	
-	
-	public function getCommandReply() {
-		try {
-			return $this->sender->receiveReply($this->isInBlockingMode());
-		} catch (\ZMQException $e) {
-			throw new CommandException("get command reply ", $e);
-		}
-	}
-	
-	public function isInBlockingMode() {
-		return $this->blockingMode;
-	}
-	
-	/**
-	 * Will close output of command
-	 */
 	public function close() {
-		$this->sender->disconnect();
+		$this->getPublisher()->unbind();
 	}
 	
 	/**
-	 * @return RequestSender
+	 * @return Publisher
 	 */
-	public function getSender() {
-		return $this->sender;
+	public function getPublisher() {
+		return $this->publisher;
 	}
 	
 	/**
