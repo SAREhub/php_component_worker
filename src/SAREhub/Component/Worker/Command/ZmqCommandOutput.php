@@ -16,9 +16,32 @@ class ZmqCommandOutput implements CommandOutput {
 	 */
 	private $format;
 	
-	public function __construct(Publisher $publisher, CommandFormat $format) {
+	protected function __construct() {
+	}
+	
+	/**
+	 * @return ZmqCommandOutput
+	 */
+	public static function newInstance() {
+		return new self();
+	}
+	
+	/**
+	 * @param Publisher $publisher
+	 * @return $this
+	 */
+	public function withPublisher(Publisher $publisher) {
 		$this->publisher = $publisher;
+		return $this;
+	}
+	
+	/**
+	 * @param CommandFormat $format
+	 * @return $this
+	 */
+	public function withCommandFormat(CommandFormat $format) {
 		$this->format = $format;
+		return $this;
 	}
 	
 	public function send($topic, Command $command, $wait = false) {

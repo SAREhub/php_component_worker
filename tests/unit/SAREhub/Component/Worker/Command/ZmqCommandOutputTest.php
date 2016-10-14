@@ -28,7 +28,9 @@ class ZmqCommandOutputTest extends TestCase {
 		$this->publisher = $this->createMock(Publisher::class);
 		$this->commandFormat = $this->createMock(CommandFormat::class);
 		$this->commandFormat->method('marshal')->willReturn('command_data');
-		$this->output = new ZmqCommandOutput($this->publisher, $this->commandFormat);
+		$this->output = ZmqCommandOutput::newInstance()
+		  ->withPublisher($this->publisher)
+		  ->withCommandFormat($this->commandFormat);
 	}
 	
 	public function testSendThenPublisherCallPublish() {
