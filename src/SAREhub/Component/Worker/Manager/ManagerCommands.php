@@ -25,14 +25,20 @@ class ManagerCommands {
 	const STATS = self::COMMAND_NAME_PREFIX.'stats';
 	
 	/**
+	 * @param $correltionId
 	 * @param $workerId
 	 * @return BasicCommand
 	 */
-	public static function start($workerId) {
-		return new BasicCommand(self::START, ['id' => $workerId]);
+	public static function start($correltionId, $workerId) {
+		return new BasicCommand($correltionId, self::START, ['id' => $workerId]);
 	}
 	
-	public static function stop($workerId) {
-		return new BasicCommand(self::STOP, ['id' => $workerId]);
+	/**
+	 * @param $correltionId
+	 * @param $workerId
+	 * @return BasicCommand
+	 */
+	public static function stop($correltionId, $workerId) {
+		return new BasicCommand($correltionId, self::STOP, ['id' => $workerId]);
 	}
 }

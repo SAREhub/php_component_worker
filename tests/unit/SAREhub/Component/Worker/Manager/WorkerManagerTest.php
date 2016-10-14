@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandReply;
 use SAREhub\Component\Worker\Manager\ManagerCommands;
+use SAREhub\Component\Worker\Manager\WorkerCommandRequest;
 use SAREhub\Component\Worker\Manager\WorkerCommandService;
 use SAREhub\Component\Worker\Manager\WorkerManager;
 use SAREhub\Component\Worker\Manager\WorkerProcessService;
@@ -27,6 +28,71 @@ class WorkerManagerTest extends TestCase {
 	 */
 	private $manager;
 	
+	/**
+	 * @var PHPUnit_Framework_MockObject_MockObject
+	 */
+	private $replyCallback;
+	
+	public function testStartCommandWhenNotExistsThenSuccess() {
+		$workerId = 'worker1';
+		$command = ManagerCommands::start('1', $workerId);
+		$this->assertCommandReply($this->once(), $command, function (CommandReply $reply) {
+			return $reply->isSuccess();
+		});
+		
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
+	public function testStartCommandWhenNotExistsThenRegisterInProcessService() {
+		$workerId = 'worker1';
+		$command = ManagerCommands::start('1', $workerId);
+		$this->processServiceMock->expects($this->once())->method('registerWorker')->with($workerId);
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
+	public function testStartCommandWhenExistsThenError() {
+		$workerId = 'worker1';
+		$command = ManagerCommands::start('1', $workerId);
+		$this->processServiceMock->method('hasWorker')->with($workerId)->willReturn(true);
+		
+		$this->assertCommandReply($this->once(), $command, function (CommandReply $reply) {
+			return $reply->isError();
+		});
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
+	public function testStartWorkerCommandWhenExistsThenNotRegisterInProcessService() {
+		$workerId = 'worker1';
+		$command = ManagerCommands::start('1', $workerId);
+		$this->processServiceMock->method('hasWorker')->with($workerId)->willReturn(true);
+		$this->processServiceMock->expects($this->never())->method('registerWorker');
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
+	public function testStopWorkerCommandWhenExistsThenCommandServiceProcess() {
+		$command = ManagerCommands::stop('1', 'worker1');
+		$this->commandServiceMock->expects($this->once())->method('process')
+		  ->with($this->callback(function (WorkerCommandRequest $request) use ($command) {
+			  return $request->getWorkerId() === 'worker1' &&
+			  $request->getCommand()->getName() === WorkerCommands::STOP &&
+			  $request->getCommand()->getCorrelationId() === $command->getCorrelationId();
+		  }));
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
+	public function testStopWorkerCommandWhenReplyThenProcessServiceUnregister() {
+		$this->processServiceMock->expects($this->once())->method('unregisterWorker')->with('worker1');
+		$command = ManagerCommands::stop('1', 'worker1');
+		
+		$this->commandServiceMock->expects($this->once())->method('process')
+		  ->with($this->callback(function (WorkerCommandRequest $request) {
+			  ($request->getReplyCallback())($request, CommandReply::success('1', 'm'));
+			  return true;
+		  }));
+		
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
 	protected function setUp() {
 		parent::setUp();
 		$this->processServiceMock = $this->createMock(WorkerProcessService::class);
@@ -34,73 +100,12 @@ class WorkerManagerTest extends TestCase {
 		$this->manager = (new WorkerManager(WorkerContext::newInstance()))
 		  ->withProcessService($this->processServiceMock)
 		  ->withCommandService($this->commandServiceMock);
+		
+		$this->replyCallback = $this->createPartialMock(stdClass::class, ['__invoke']);
 	}
 	
-	public function testStartCommandWhenNotExistsThenSuccess() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$reply = $this->manager->processCommand($command);
-		$this->assertTrue($reply->isSuccess());
-	}
-	
-	public function testStartCommandWhenNotExistsThenRegisterInProcessService() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$this->processServiceMock->expects($this->once())->method('register')->with($workerId);
-		$this->manager->processCommand($command);
-	}
-	
-	public function testStartCommandWhenNotExistsThenStartInProcessService() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$this->processServiceMock->expects($this->once())->method('start')->with($workerId);
-		$this->manager->processCommand($command);
-	}
-	
-	public function testStartCommandWhenNotExistsThenRegisterInCommandService() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$this->commandServiceMock->expects($this->once())->method('register')->with($workerId);
-		$this->manager->processCommand($command);
-	}
-	
-	public function testStartCommandWhenExistsThenError() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$this->processServiceMock->method('has')->with($workerId)->willReturn(true);
-		$reply = $this->manager->processCommand($command);
-		$this->assertTrue($reply->isError());
-	}
-	
-	public function testStartWorkerCommandWhenExistsThenNotRegisterInProcessService() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$this->processServiceMock->method('has')->with($workerId)->willReturn(true);
-		$this->processServiceMock->expects($this->never())->method('register');
-		$this->manager->processCommand($command);
-	}
-	
-	public function testStartWorkerCommandWhenExistsThenNotRegisterInCommandService() {
-		$workerId = 'worker1';
-		$command = ManagerCommands::start($workerId);
-		$this->processServiceMock->method('has')->with($workerId)->willReturn(true);
-		$this->commandServiceMock->expects($this->never())->method('register');
-		$this->manager->processCommand($command);
-	}
-	
-	public function testStopWorkerCommandWhenExistsThenSendCommand() {
-		$command = ManagerCommands::stop('worker1');
-		$this->commandServiceMock->expects($this->once())->method('sendCommand')
-		  ->with('worker1', $this->callback(function (Command $command) {
-			  return $command->getName() === WorkerCommands::STOP;
-		  }))->willReturn(CommandReply::success('reply'));
-		$this->manager->processCommand($command);
-	}
-	
-	public function testStopWorkerCommandWhenExistsThenReturnReply() {
-		$command = ManagerCommands::stop('worker1');
-		$expectedReply = CommandReply::success('reply');
-		$this->commandServiceMock->method('sendCommand')->willReturn($expectedReply);
-		$this->assertSame($expectedReply, $this->manager->processCommand($command));
+	private function assertCommandReply($invokeTimes, Command $command, callable $callback) {
+		$this->replyCallback->expects($invokeTimes)->method('__invoke')
+		  ->with($command, $this->callback($callback));
 	}
 }

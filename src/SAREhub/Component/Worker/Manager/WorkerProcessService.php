@@ -35,6 +35,13 @@ class WorkerProcessService extends ServiceSupport {
 		return $this;
 	}
 	
+	/**
+	 * @return array
+	 */
+	public function getWorkerList() {
+		return array_keys($this->processList);
+	}
+	
 	protected function doStart() {
 		
 	}

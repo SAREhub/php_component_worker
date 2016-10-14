@@ -28,69 +28,111 @@ class WorkerManager extends BasicWorker {
 		parent::__construct($context);
 	}
 	
+	/**
+	 * @param WorkerContext $context
+	 * @return WorkerManager
+	 */
+	public static function newInstanceWithContext(WorkerContext $context) {
+		return new self($context);
+	}
+	
+	/**
+	 * @param WorkerCommandService $service
+	 * @return $this
+	 */
 	public function withCommandService(WorkerCommandService $service) {
 		$this->commandService = $service;
 		return $this;
 	}
 	
+	/**
+	 * @param WorkerProcessService $service
+	 * @return $this
+	 */
 	public function withProcessService(WorkerProcessService $service) {
 		$this->processService = $service;
 		return $this;
 	}
 	
 	protected function doStart() {
-		
+		$this->getProcessService()->start();
+		$this->getCommandService()->start();
 	}
 	
 	protected function doTick() {
-		
+		$this->getProcessService()->tick();
+		$this->getCommandService()->tick();
 	}
 	
 	protected function doStop() {
-		$this->commandService->stop();
+		foreach ($this->getWorkerList() as $workerId) {
+			$this->doCommand(ManagerCommands::stop($workerId), function () { });
+		}
+		
+		$this->getProcessService()->stop();
+		$this->getCommandService()->stop();
 	}
 	
-	protected function doCommand(Command $command) {
+	protected function doCommand(Command $command, callable $replyCallback) {
 		switch ($command->getName()) {
 			case ManagerCommands::START:
-				return $this->onStartCommand($command);
+				$this->onStartCommand($command, $replyCallback);
+				break;
 			case ManagerCommands::STOP:
-				return $this->onStopCommand($command);
+				$this->onStopCommand($command, $replyCallback);
+				break;
+			default:
+				$this->onUnknownCommand($command, $replyCallback);
+				break;
 		}
-		
-		$this->getLogger()->warning('Unknown command ', ['command' => $command]);
-		return CommandReply::error('unknown command', $command->getName());
 	}
 	
-	protected function onStartCommand(Command $command) {
+	protected function onStartCommand(Command $command, callable $replyCallback) {
 		$id = $command->getParameters()['id'];
-		$context = ['command' => $command];
+		$context = ['command' => (string)$command];
 		
-		if ($this->getProcessService()->has($id)) {
+		$reply = null;
+		
+		if ($this->getProcessService()->hasWorker($id)) {
 			$message = 'worker with same id running';
 			$this->getLogger()->warning($message, $context);
-			return CommandReply::error($message);
+			$reply = CommandReply::error($command->getCorrelationId(), $message);
+		} else {
+			$this->getProcessService()->registerWorker($id);
+			$message = 'worker started with PID: '.$this->getProcessService()->getWorkerPid($id);
+			$this->getLogger()->info($message, $context);
+			$reply = CommandReply::success($command->getCorrelationId(), $message);
 		}
 		
-		$this->getProcessService()->register($id);
-		$this->getProcessService()->start($id);
-		$this->getCommandService()->register($id);
-		
-		$message = 'worker started';
-		$this->getLogger()->info($message, $context);
-		return CommandReply::success($message);
+		$replyCallback($command, $reply);
 	}
 	
-	protected function onStopCommand(Command $command) {
+	protected function onStopCommand(Command $command, callable $replyCallback) {
 		$id = $command->getParameters()['id'];
-		$this->getLogger()->info('send stop command to worker', ['command' => $command]);
-		
-		$reply = $this->getCommandService()->sendCommand($id, WorkerCommands::stop());
-		if ($reply->isSuccess()) {
-			$this->getProcessService()->unregister($id);
-			$this->getCommandService()->unregister($id);
-		}
-		return $reply;
+		$this->getLogger()->info('send stop command to worker', ['command' => (string)$command]);
+		$manager = $this;
+		$request = WorkerCommandRequest::newInstance()
+		  ->withWorkerId($id)
+		  ->withCommand(WorkerCommands::stop($command->getCorrelationId()))
+		  ->withReplyCallback(
+			function (WorkerCommandRequest $request, CommandReply $reply) use ($manager, $replyCallback) {
+				$this->getLogger()->info('got reply', ['request' => $request, 'reply' => json_encode($reply)]);
+				$manager->getProcessService()->unregisterWorker($request->getWorkerId());
+				$replyCallback($reply);
+			});
+		$this->getCommandService()->process($request);
+	}
+	
+	protected function onUnknownCommand(Command $command, callable $replyCallback) {
+		$this->getLogger()->warning('unknown command', ['command' => (string)$command]);
+		$replyCallback($command, CommandReply::error('unknown command', $command->getName()));
+	}
+	
+	/**
+	 * @return array
+	 */
+	public function getWorkerList() {
+		return $this->getProcessService()->getWorkerList();
 	}
 	
 	/**
