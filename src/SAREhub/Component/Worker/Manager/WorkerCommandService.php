@@ -65,6 +65,10 @@ class WorkerCommandService extends ServiceSupport {
 		}
 	}
 	
+	public function processMulti(MultiWorkerCommandRequest $request) {
+		
+	}
+	
 	/**
 	 * @return WorkerCommandRequest[]
 	 */

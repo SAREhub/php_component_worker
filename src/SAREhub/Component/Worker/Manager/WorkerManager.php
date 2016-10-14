@@ -2,6 +2,7 @@
 
 namespace SAREhub\Component\Worker\Manager;
 
+use SAREhub\Commons\Misc\TimeProvider;
 use SAREhub\Component\Worker\BasicWorker;
 use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandReply;
@@ -65,12 +66,14 @@ class WorkerManager extends BasicWorker {
 	}
 	
 	protected function doStop() {
-		foreach ($this->getWorkerList() as $workerId) {
-			$this->doCommand(ManagerCommands::stop($workerId), function () { });
-		}
+		$this->processCommand(ManagerCommands::stopAll('doStopManager'.TimeProvider::get()->now()), function () {
+			$this->getProcessService()->stop();
+			$this->getCommandService()->stop();
+		});
 		
-		$this->getProcessService()->stop();
-		$this->getCommandService()->stop();
+		while (count($this->getWorkerList())) {
+			$this->doTick();
+		}
 	}
 	
 	protected function doCommand(Command $command, callable $replyCallback) {
@@ -80,6 +83,9 @@ class WorkerManager extends BasicWorker {
 				break;
 			case ManagerCommands::STOP:
 				$this->onStopCommand($command, $replyCallback);
+				break;
+			case ManagerCommands::STOP_ALL:
+				$this->onStopAllCommand($command, $replyCallback);
 				break;
 			default:
 				$this->onUnknownCommand($command, $replyCallback);
@@ -92,7 +98,6 @@ class WorkerManager extends BasicWorker {
 		$context = ['command' => (string)$command];
 		
 		$reply = null;
-		
 		if ($this->getProcessService()->hasWorker($id)) {
 			$message = 'worker with same id running';
 			$this->getLogger()->warning($message, $context);
@@ -115,12 +120,43 @@ class WorkerManager extends BasicWorker {
 		  ->withWorkerId($id)
 		  ->withCommand(WorkerCommands::stop($command->getCorrelationId()))
 		  ->withReplyCallback(
-			function (WorkerCommandRequest $request, CommandReply $reply) use ($manager, $replyCallback) {
+		    function (WorkerCommandRequest $request, CommandReply $reply) use ($manager, $replyCallback, $command) {
 				$this->getLogger()->info('got reply', ['request' => $request, 'reply' => json_encode($reply)]);
 				$manager->getProcessService()->unregisterWorker($request->getWorkerId());
-				$replyCallback($reply);
+			    $replyCallback($command, $reply);
 			});
 		$this->getCommandService()->process($request);
+	}
+	
+	public function onStopAllCommand(Command $command, callable $replyCallback) {
+		$workerList = $this->getWorkerList();
+		$replyAll = [];
+		$inputCommand = $command;
+		$stopAllCallback = function (Command $command, CommandReply $reply) use ($inputCommand, &$replyAll, &$workerList, $replyCallback) {
+			unset($workerList[$command->getParameters()['id']]);
+			$replyAll[] = $reply;
+			if (count($workerList) === 0) {
+				$status = CommandReply::SUCCESS_STATUS;
+				$convertedReply = [];
+				foreach ($replyAll as $reply) {
+					if ($reply->isError()) {
+						$status = CommandReply::ERROR_STATUS;
+					}
+					$convertedReply[] = $reply->jsonSerialize();
+				}
+				$replyCallback($inputCommand, CommandReply::reply(
+				  $inputCommand->getCorrelationId(),
+				  $status,
+				  $convertedReply)
+				);
+			}
+		};
+		
+		foreach ($workerList as $workerId) {
+			$correlationId = $command->getCorrelationId();
+			$managerCommand = ManagerCommands::stop($correlationId, $workerId);
+			$this->processCommand($managerCommand, $stopAllCallback);
+		}
 	}
 	
 	protected function onUnknownCommand(Command $command, callable $replyCallback) {
@@ -138,14 +174,14 @@ class WorkerManager extends BasicWorker {
 	/**
 	 * @return WorkerProcessService
 	 */
-	protected function getProcessService() {
+	public function getProcessService() {
 		return $this->processService;
 	}
 	
 	/**
 	 * @return WorkerCommandService
 	 */
-	protected function getCommandService() {
+	public function getCommandService() {
 		return $this->commandService;
 	}
 }
