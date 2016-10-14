@@ -12,11 +12,37 @@ class ZmqCommandReplyOutput implements CommandReplyOutput {
 	 */
 	private $publisher;
 	
+	/**
+	 * @var string
+	 */
 	private $publishTopic;
 	
-	public function __construct(Publisher $publisher, $publishTopic) {
+	protected function __construct() {
+	}
+	
+	/**
+	 * @return ZmqCommandReplyOutput
+	 */
+	public static function newInstance() {
+		return new self();
+	}
+	
+	/**
+	 * @param Publisher $publisher
+	 * @return $this
+	 */
+	public function withPublisher(Publisher $publisher) {
 		$this->publisher = $publisher;
+		return $this;
+	}
+	
+	/**
+	 * @param $publishTopic
+	 * @return $this
+	 */
+	public function withPublishTopic($publishTopic) {
 		$this->publishTopic = $publishTopic;
+		return $this;
 	}
 	
 	public function send(CommandReply $reply, $wait = false) {

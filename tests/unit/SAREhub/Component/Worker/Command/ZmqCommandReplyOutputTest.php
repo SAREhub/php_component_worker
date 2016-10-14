@@ -23,7 +23,9 @@ class ZmqCommandReplyOutputTest extends TestCase {
 	protected function setUp() {
 		parent::setUp();
 		$this->publisher = $this->createMock(Publisher::class);
-		$this->output = new ZmqCommandReplyOutput($this->publisher, $this->topic);
+		$this->output = ZmqCommandReplyOutput::newInstance()
+		  ->withPublisher($this->publisher)
+		  ->withPublishTopic($this->topic);
 		$this->reply = CommandReply::success("id", "reply");
 	}
 	
