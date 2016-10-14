@@ -6,19 +6,31 @@ use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
 
 class ZmqCommandReplyInput implements CommandReplyInput {
 	
+	/**
+	 * @var Subscriber
+	 */
 	private $subscriber;
 	
-	/**
-	 * @param Subscriber $subscriber
-	 */
-	public function __construct(Subscriber $subscriber) {
-		$this->subscriber = $subscriber;
+	protected function __construct() {
+		
 	}
 	
 	/**
-	 * @param bool $wait
-	 * @return null|CommandReply
+	 * @return ZmqCommandReplyInput
 	 */
+	public static function newInstance() {
+		return new self();
+	}
+	
+	/**
+	 * @param Subscriber $subscriber
+	 * @return $this
+	 */
+	public function withSubscriber(Subscriber $subscriber) {
+		$this->subscriber = $subscriber;
+		return $this;
+	}
+	
 	public function getNext($wait = false) {
 		$replyData = $this->subscriber->receive($wait);
 		return ($replyData) ? CommandReply::createFromJson($replyData['body']) : null;

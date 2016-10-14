@@ -14,7 +14,8 @@ class ZmqCommandReplyInputTest extends TestCase {
 	protected function setUp() {
 		parent::setUp();
 		$this->subscriber = $this->createMock(Subscriber::class);
-		$this->input = new ZmqCommandReplyInput($this->subscriber);
+		$this->input = ZmqCommandReplyInput::newInstance()
+		  ->withSubscriber($this->subscriber);
 	}
 	
 	public function testGetNextThenSubscriberCallReceive() {
