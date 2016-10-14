@@ -13,32 +13,61 @@ class ZmqCommandInput implements CommandInput {
 	/**
 	 * @var Subscriber
 	 */
-	private $commandSubscriber;
+	private $subscriber;
 	
 	/**
 	 * @var CommandFormat
 	 */
 	private $format;
 	
+	protected function __construct() {
+	}
 	
-	public function __construct(Subscriber $commandSubscriber, CommandFormat $format) {
-		$this->commandSubscriber = $commandSubscriber;
+	/**
+	 * @return ZmqCommandInput
+	 */
+	public static function newInstance() {
+		return new self();
+	}
+	
+	/**
+	 * @param Subscriber $commandSubscriber
+	 * @return $this
+	 */
+	public function withCommandSubscriber(Subscriber $commandSubscriber) {
+		$this->subscriber = $commandSubscriber;
+		return $this;
+	}
+	
+	/**
+	 * @param CommandFormat $format
+	 * @return $this
+	 */
+	public function withCommandFormat(CommandFormat $format) {
 		$this->format = $format;
+		return $this;
 	}
 	
 	public function getNext($wait = false) {
-		$commandData = $this->getCommandSubscriber()->receive($wait);
+		$commandData = $this->getSubscriber()->receive($wait);
 		return ($commandData) ? $this->format->unmarshal($commandData['body']) : null;
 	}
 	
 	public function close() {
-		$this->getCommandSubscriber()->disconnect();
+		$this->getSubscriber()->disconnect();
 	}
 	
 	/**
 	 * @return Subscriber
 	 */
-	public function getCommandSubscriber() {
-		return $this->commandSubscriber;
+	public function getSubscriber() {
+		return $this->subscriber;
+	}
+	
+	/**
+	 * @return CommandFormat
+	 */
+	public function getCommandFormat() {
+		return $this->format;
 	}
 }
