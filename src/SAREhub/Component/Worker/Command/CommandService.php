@@ -1,14 +1,11 @@
 <?php
 
-namespace SAREhub\Component\Worker\Manager;
+namespace SAREhub\Component\Worker\Command;
 
 use SAREhub\Commons\Misc\TimeProvider;
-use SAREhub\Component\Worker\Command\CommandOutput;
-use SAREhub\Component\Worker\Command\CommandReply;
-use SAREhub\Component\Worker\Command\CommandReplyInput;
 use SAREhub\Component\Worker\Service\ServiceSupport;
 
-class WorkerCommandService extends ServiceSupport {
+class CommandService extends ServiceSupport {
 	
 	/**
 	 * @var CommandOutput
@@ -21,7 +18,7 @@ class WorkerCommandService extends ServiceSupport {
 	private $commandReplyInput;
 	
 	/**
-	 * @var WorkerCommandRequest[]
+	 * @var CommandRequest[]
 	 */
 	private $pendingRequests = [];
 	
@@ -30,7 +27,7 @@ class WorkerCommandService extends ServiceSupport {
 	}
 	
 	/**
-	 * @return WorkerCommandService
+	 * @return CommandService
 	 */
 	public static function newInstance() {
 		return new self();
@@ -54,19 +51,15 @@ class WorkerCommandService extends ServiceSupport {
 		return $this;
 	}
 	
-	public function process(WorkerCommandRequest $request) {
+	public function process(CommandRequest $request) {
 		$this->getLogger()->info('sending command request', ['request' => $request]);
 		try {
-			$this->commandOutput->send($request->getWorkerId(), $request->getCommand(), false);
+			$this->commandOutput->send($request->getTopic(), $request->getCommand(), false);
 			$request->markAsSent(TimeProvider::get()->now());
 			$this->pendingRequests[] = $request;
 		} catch (\Exception $e) {
 			$this->onRequestException($request, $e);
 		}
-	}
-	
-	public function processMulti(MultiWorkerCommandRequest $request) {
-		
 	}
 	
 	/**
@@ -98,10 +91,10 @@ class WorkerCommandService extends ServiceSupport {
 		if ($reply = $this->getCommandReplyInput()->getNext()) {
 			$this->getLogger()->info('got reply', ['reply' => $reply]);
 			if ($request = $this->getCorrelatedPendingRequest($reply)) {
-				$this->getLogger()->info('exists correlated command',
-				  ['request' => $request],
-				  ['reply' => $reply]
-				);
+				$this->getLogger()->info('exists correlated command', [
+				  'request' => $request,
+				  'reply' => $reply
+				]);
 				($request->getReplyCallback())($request, $reply);
 			}
 			$this->getLogger()->info('not exists correlated command for reply', ['reply' => $reply]);
@@ -113,7 +106,7 @@ class WorkerCommandService extends ServiceSupport {
 	protected function doStop() {
 	}
 	
-	private function onRequestException(WorkerCommandRequest $request, \Exception $exception) {
+	private function onRequestException(CommandRequest $request, \Exception $exception) {
 		$this->getLogger()->error($exception, ['request' => $request]);
 		$reply = CommandReply::error(
 		  $request->getCommand()->getCorrelationId(),
@@ -125,7 +118,7 @@ class WorkerCommandService extends ServiceSupport {
 	
 	/**
 	 * @param CommandReply $reply
-	 * @return null|WorkerCommandRequest
+	 * @return null|CommandRequest
 	 */
 	private function getCorrelatedPendingRequest(CommandReply $reply) {
 		foreach ($this->getPendingRequests() as $request) {

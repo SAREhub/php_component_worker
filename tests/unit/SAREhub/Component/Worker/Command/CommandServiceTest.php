@@ -6,10 +6,10 @@ use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\CommandOutput;
 use SAREhub\Component\Worker\Command\CommandReply;
 use SAREhub\Component\Worker\Command\CommandReplyInput;
-use SAREhub\Component\Worker\Manager\WorkerCommandRequest;
-use SAREhub\Component\Worker\Manager\WorkerCommandService;
+use SAREhub\Component\Worker\Command\CommandRequest;
+use SAREhub\Component\Worker\Command\CommandService;
 
-class WorkerCommandServiceTest extends TestCase {
+class CommandServiceTest extends TestCase {
 	
 	/**
 	 * @var PHPUnit_Framework_MockObject_MockObject
@@ -22,12 +22,12 @@ class WorkerCommandServiceTest extends TestCase {
 	private $inputMock;
 	
 	/**
-	 * @var WorkerCommandService
+	 * @var CommandService
 	 */
 	private $service;
 	
 	/**
-	 * @var WorkerCommandRequest
+	 * @var CommandRequest
 	 */
 	private $request;
 	
@@ -35,14 +35,14 @@ class WorkerCommandServiceTest extends TestCase {
 		parent::setUp();
 		$this->outputMock = $this->createMock(CommandOutput::class);
 		$this->inputMock = $this->createMock(CommandReplyInput::class);
-		$this->service = WorkerCommandService::newInstance()
+		$this->service = CommandService::newInstance()
 		  ->withCommandOutput($this->outputMock)
 		  ->withCommandReplyInput($this->inputMock);
 		
 		$this->service->start();
 		
-		$this->request = WorkerCommandRequest::newInstance()
-		  ->withWorkerId('worker1')
+		$this->request = CommandRequest::newInstance()
+		  ->withTopic('worker1')
 		  ->withCommand(new BasicCommand('1', 'c'))
 		  ->withReplyCallback($this->createPartialMock(stdClass::class, ['__invoke']));
 	}
@@ -55,7 +55,7 @@ class WorkerCommandServiceTest extends TestCase {
 	public function testProcessThenOutputSend() {
 		$this->outputMock->expects($this->once())->method('send')
 		  ->with(
-			$this->request->getWorkerId(),
+		    $this->request->getTopic(),
 			$this->request->getCommand(),
 			false
 		  );

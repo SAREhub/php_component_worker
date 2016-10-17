@@ -6,6 +6,8 @@ use SAREhub\Commons\Misc\TimeProvider;
 use SAREhub\Component\Worker\BasicWorker;
 use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandReply;
+use SAREhub\Component\Worker\Command\CommandRequest;
+use SAREhub\Component\Worker\Command\CommandService;
 use SAREhub\Component\Worker\WorkerCommands;
 use SAREhub\Component\Worker\WorkerContext;
 
@@ -16,7 +18,7 @@ use SAREhub\Component\Worker\WorkerContext;
 class WorkerManager extends BasicWorker {
 	
 	/**
-	 * @var WorkerCommandService
+	 * @var CommandService
 	 */
 	private $commandService;
 	
@@ -38,10 +40,10 @@ class WorkerManager extends BasicWorker {
 	}
 	
 	/**
-	 * @param WorkerCommandService $service
+	 * @param CommandService $service
 	 * @return $this
 	 */
-	public function withCommandService(WorkerCommandService $service) {
+	public function withCommandService(CommandService $service) {
 		$this->commandService = $service;
 		return $this;
 	}
@@ -116,13 +118,13 @@ class WorkerManager extends BasicWorker {
 		$id = $command->getParameters()['id'];
 		$this->getLogger()->info('send stop command to worker', ['command' => (string)$command]);
 		$manager = $this;
-		$request = WorkerCommandRequest::newInstance()
-		  ->withWorkerId($id)
+		$request = CommandRequest::newInstance()
+		  ->withTopic($id)
 		  ->withCommand(WorkerCommands::stop($command->getCorrelationId()))
 		  ->withReplyCallback(
-		    function (WorkerCommandRequest $request, CommandReply $reply) use ($manager, $replyCallback, $command) {
+		    function (CommandRequest $request, CommandReply $reply) use ($manager, $replyCallback, $command) {
 				$this->getLogger()->info('got reply', ['request' => $request, 'reply' => json_encode($reply)]);
-				$manager->getProcessService()->unregisterWorker($request->getWorkerId());
+			    $manager->getProcessService()->unregisterWorker($request->getTopic());
 			    $replyCallback($command, $reply);
 			});
 		$this->getCommandService()->process($request);
@@ -179,7 +181,7 @@ class WorkerManager extends BasicWorker {
 	}
 	
 	/**
-	 * @return WorkerCommandService
+	 * @return CommandService
 	 */
 	public function getCommandService() {
 		return $this->commandService;

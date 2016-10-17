@@ -3,9 +3,9 @@
 use PHPUnit\Framework\TestCase;
 use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandReply;
+use SAREhub\Component\Worker\Command\CommandRequest;
+use SAREhub\Component\Worker\Command\CommandService;
 use SAREhub\Component\Worker\Manager\ManagerCommands;
-use SAREhub\Component\Worker\Manager\WorkerCommandRequest;
-use SAREhub\Component\Worker\Manager\WorkerCommandService;
 use SAREhub\Component\Worker\Manager\WorkerManager;
 use SAREhub\Component\Worker\Manager\WorkerProcessService;
 use SAREhub\Component\Worker\WorkerCommands;
@@ -72,8 +72,8 @@ class WorkerManagerTest extends TestCase {
 	public function testStopWorkerCommandWhenExistsThenCommandServiceProcess() {
 		$command = ManagerCommands::stop('1', 'worker1');
 		$this->commandServiceMock->expects($this->once())->method('process')
-		  ->with($this->callback(function (WorkerCommandRequest $request) use ($command) {
-			  return $request->getWorkerId() === 'worker1' &&
+		  ->with($this->callback(function (CommandRequest $request) use ($command) {
+			  return $request->getTopic() === 'worker1' &&
 			  $request->getCommand()->getName() === WorkerCommands::STOP &&
 			  $request->getCommand()->getCorrelationId() === $command->getCorrelationId();
 		  }));
@@ -85,7 +85,7 @@ class WorkerManagerTest extends TestCase {
 		$command = ManagerCommands::stop('1', 'worker1');
 		
 		$this->commandServiceMock->expects($this->once())->method('process')
-		  ->with($this->callback(function (WorkerCommandRequest $request) {
+		  ->with($this->callback(function (CommandRequest $request) {
 			  ($request->getReplyCallback())($request, CommandReply::success('1', 'm'));
 			  return true;
 		  }));
@@ -96,7 +96,7 @@ class WorkerManagerTest extends TestCase {
 	protected function setUp() {
 		parent::setUp();
 		$this->processServiceMock = $this->createMock(WorkerProcessService::class);
-		$this->commandServiceMock = $this->createMock(WorkerCommandService::class);
+		$this->commandServiceMock = $this->createMock(CommandService::class);
 		$this->manager = (new WorkerManager(WorkerContext::newInstance()))
 		  ->withProcessService($this->processServiceMock)
 		  ->withCommandService($this->commandServiceMock);

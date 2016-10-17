@@ -1,18 +1,15 @@
 <?php
 
-namespace SAREhub\Component\Worker\Manager;
+namespace SAREhub\Component\Worker\Command;
 
-
-use SAREhub\Component\Worker\Command\Command;
-
-class WorkerCommandRequest {
+class CommandRequest {
 	
 	const DEFAULT_REPLY_TIMEOUT = 30;
 	
 	/**
 	 * @var string
 	 */
-	private $workerId;
+	private $topic;
 	
 	/**
 	 * @var Command
@@ -34,30 +31,48 @@ class WorkerCommandRequest {
 	 */
 	private $replyCallback;
 	
-	
 	protected function __construct() {
 		
 	}
 	
+	/**
+	 * @return CommandRequest
+	 */
 	public static function newInstance() {
 		return new self();
 	}
 	
-	public function withWorkerId($id) {
-		$this->workerId = $id;
+	/**
+	 * @param $topic
+	 * @return $this
+	 */
+	public function withTopic($topic) {
+		$this->topic = $topic;
 		return $this;
 	}
 	
+	/**
+	 * @param Command $command
+	 * @return $this
+	 */
 	public function withCommand(Command $command) {
 		$this->command = $command;
 		return $this;
 	}
 	
+	/**
+	 * @param $timeout
+	 * @return $this
+	 */
 	public function withReplyTimeout($timeout) {
 		$this->replyTimeout = $timeout;
 		return $this;
 	}
 	
+	/**
+	 * @param callable $callback
+	 * @return $this
+	 */
 	public function withReplyCallback(callable $callback) {
 		$this->replyCallback = $callback;
 		return $this;
@@ -82,11 +97,8 @@ class WorkerCommandRequest {
 		return $this->isSent() && $now >= ($this->getSentTime() + $this->getReplyTimeout());
 	}
 	
-	/**
-	 * @return string
-	 */
-	public function getWorkerId() {
-		return $this->workerId;
+	public function getTopic() {
+		return $this->topic;
 	}
 	
 	/**
@@ -116,5 +128,4 @@ class WorkerCommandRequest {
 	public function getReplyCallback() {
 		return $this->replyCallback;
 	}
-	
 }
