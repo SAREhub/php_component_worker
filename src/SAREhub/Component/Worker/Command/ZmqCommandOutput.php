@@ -50,7 +50,7 @@ class ZmqCommandOutput implements CommandOutput {
 	}
 	
 	public function close() {
-		$this->getPublisher()->unbind();
+		$this->publisher->close();
 	}
 	
 	/**

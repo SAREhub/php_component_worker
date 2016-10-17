@@ -41,8 +41,8 @@ class ZmqCommandReplyInputTest extends TestCase {
 		$this->assertInstanceOf(CommandReply::class, $this->input->getNext());
 	}
 	
-	public function testCloseThenSubscriberDisconnect() {
-		$this->subscriber->expects($this->once())->method('disconnect');
+	public function testCloseThenSubscriberClose() {
+		$this->subscriber->expects($this->once())->method('close');
 		$this->input->close();
 	}
 	

@@ -32,11 +32,15 @@ class ZmqCommandReplyInput implements CommandReplyInput {
 	}
 	
 	public function getNext($wait = false) {
-		$replyData = $this->subscriber->receive($wait);
+		$replyData = $this->getSubscriber()->receive($wait);
 		return ($replyData) ? CommandReply::createFromJson($replyData['body']) : null;
 	}
 	
 	public function close() {
-		$this->subscriber->disconnect();
+		$this->getSubscriber()->close();
+	}
+	
+	public function getSubscriber() {
+		return $this->subscriber;
 	}
 }

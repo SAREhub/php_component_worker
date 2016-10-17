@@ -42,7 +42,7 @@ class ZmqCommandReplyOutputTest extends TestCase {
 	}
 	
 	public function testClose() {
-		$this->publisher->expects($this->once())->method('unbind');
+		$this->publisher->expects($this->once())->method('close');
 		$this->output->close();
 	}
 }

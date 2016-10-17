@@ -54,7 +54,7 @@ class ZmqCommandInput implements CommandInput {
 	}
 	
 	public function close() {
-		$this->getSubscriber()->disconnect();
+		$this->getSubscriber()->close();
 	}
 	
 	/**

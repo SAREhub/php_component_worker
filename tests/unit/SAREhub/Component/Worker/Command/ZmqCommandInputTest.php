@@ -65,7 +65,7 @@ class ZmqCommandInputTest extends TestCase {
 	}
 	
 	public function testClose() {
-		$this->subscriberMock->expects($this->once())->method('disconnect');
+		$this->subscriberMock->expects($this->once())->method('close');
 		$this->commandInput->close();
 	}
 }

@@ -44,7 +44,7 @@ class ZmqCommandOutputTest extends TestCase {
 	}
 	
 	public function testCloseThenPublisherCallUnbind() {
-		$this->publisher->expects($this->once())->method('unbind');
+		$this->publisher->expects($this->once())->method('close');
 		$this->output->close();
 	}
 	
