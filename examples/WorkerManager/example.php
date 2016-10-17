@@ -26,13 +26,13 @@ $zmqContext = new ZMQContext();
 $workerCommandService = WorkerCommandService::newInstance()
   ->withCommandOutput(ZmqCommandOutput::newInstance()
 	->withPublisher(Publisher::inContext($zmqContext)
-	  ->bind(Dsn::tcp()->endpoint('127.0.0.1:30002'))
+	  ->bind(Dsn::tcp()->endpoint('127.0.0.1:30001'))
 	)
 	->withCommandFormat(JsonCommandFormat::newInstance()))
   ->withCommandReplyInput(ZmqCommandReplyInput::newInstance()
 	->withSubscriber(Subscriber::inContext($zmqContext)
 	  ->subscribe('worker.command.reply')
-	  ->connect(Dsn::tcp()->endpoint('127.0.0.1:30001'))
+	  ->bind(Dsn::tcp()->endpoint('127.0.0.1:30002'))
 	)
   );
 
@@ -57,7 +57,7 @@ $workerManager->processCommand(ManagerCommands::start('1', 'worker1'), $replyCal
 $workerManager->processCommand(ManagerCommands::start('2', 'worker2'), $replyCallback);
 $workerManager->processCommand(ManagerCommands::start('3', 'worker3'), $replyCallback);
 
-sleep(20);
+sleep(10);
 
 $workerManager->stop();
 

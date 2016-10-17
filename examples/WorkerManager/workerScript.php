@@ -43,23 +43,26 @@ $context = WorkerContext::newInstance()
   ->withId($argv[1])
   ->withRootPath(__DIR__);
 
+$logger = new Logger($context->getId());
+$logger->pushHandler(new StreamHandler(__DIR__.'/log', Logger::DEBUG));
+
+try {
 $zmqContext = new ZMQContext();
 $runner = WorkerRunner::newInstance()
   ->withWorker(new TestWorker($context))
   ->withCommandInput(ZmqCommandInput::newInstance()
 	->withCommandSubscriber(Subscriber::inContext($zmqContext)
 	  ->subscribe($context->getId())
-	  ->connect(Dsn::tcp()->endpoint('127.0.0.1:30002'))
+	  ->connect(Dsn::tcp()->endpoint('127.0.0.1:30001'))
 	)
 	->withCommandFormat(JsonCommandFormat::newInstance()))
   ->withCommandReplyOutput(ZmqCommandReplyOutput::newInstance()
 	->withPublisher(Publisher::inContext($zmqContext)
-	  ->bind(Dsn::tcp()->endpoint('127.0.0.1:30001')))
+	  ->connect(Dsn::tcp()->endpoint('127.0.0.1:30002')))
 	->withPublishTopic('worker.command.reply')
   );
-
-$logger = new Logger($context->getId());
-$logger->pushHandler(new StreamHandler(__DIR__.'/log', Logger::DEBUG));
+	
+	$logger->info("init");
 $runner->getWorker()->setLogger($logger);
 $runner->setLogger($logger);
 $runner->start();
@@ -67,3 +70,7 @@ while ($runner->isRunning()) {
 	$runner->tick();
 }
 $runner->stop();
+	
+} catch (Exception $e) {
+	$logger->error($e);
+}

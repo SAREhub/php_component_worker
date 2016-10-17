@@ -152,9 +152,9 @@ class WorkerManager extends BasicWorker {
 			}
 		};
 		
+		$correlationId = $command->getCorrelationId();
 		foreach ($workerList as $workerId) {
-			$correlationId = $command->getCorrelationId();
-			$managerCommand = ManagerCommands::stop($correlationId, $workerId);
+			$managerCommand = ManagerCommands::stop($correlationId.$workerId, $workerId);
 			$this->processCommand($managerCommand, $stopAllCallback);
 		}
 	}
