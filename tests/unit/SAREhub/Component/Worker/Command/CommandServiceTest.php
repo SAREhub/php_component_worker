@@ -135,4 +135,14 @@ class CommandServiceTest extends TestCase {
 		  }));
 		$this->service->tick();
 	}
+	
+	public function testStopThenCommandOutputClose() {
+		$this->outputMock->expects($this->once())->method('close');
+		$this->service->stop();
+	}
+	
+	public function testStopThenCommandReplyInputClose() {
+		$this->inputMock->expects($this->once())->method('close');
+		$this->service->stop();
+	}
 }

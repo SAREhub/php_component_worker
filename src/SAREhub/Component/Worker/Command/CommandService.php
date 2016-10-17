@@ -63,7 +63,7 @@ class CommandService extends ServiceSupport {
 	}
 	
 	/**
-	 * @return WorkerCommandRequest[]
+	 * @return CommandRequest[]
 	 */
 	public function getPendingRequests() {
 		return $this->pendingRequests;
@@ -104,6 +104,8 @@ class CommandService extends ServiceSupport {
 	}
 	
 	protected function doStop() {
+		$this->getCommandOutput()->close();
+		$this->getCommandReplyInput()->close();
 	}
 	
 	private function onRequestException(CommandRequest $request, \Exception $exception) {
@@ -118,7 +120,7 @@ class CommandService extends ServiceSupport {
 	
 	/**
 	 * @param CommandReply $reply
-	 * @return null|CommandRequest
+	 * @return CommandRequest|null
 	 */
 	private function getCorrelatedPendingRequest(CommandReply $reply) {
 		foreach ($this->getPendingRequests() as $request) {
