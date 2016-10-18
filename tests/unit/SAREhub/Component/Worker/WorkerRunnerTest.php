@@ -72,7 +72,6 @@ class WorkerRunnerTest extends TestCase {
 		$signals->expects($this->once())->method('checkPendingSignals');
 		$this->workerRunner->usePcntl($signals);
 		$this->workerRunner->tick();
-		var_dump($signals === $this->workerRunner->getPcntlSignals());
 	}
 	
 	public function testUsePcntlThenHandleSIGINT() {
