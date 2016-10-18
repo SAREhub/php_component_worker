@@ -22,9 +22,11 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 	 */
 	public function start() {
 		if (!$this->isStarted()) {
+			$this->getLogger()->info('service starting ...');
 			$this->doStart();
 			$this->started = true;
 			$this->stopped = false;
+			$this->getLogger()->info('service started');
 		}
 	}
 	
@@ -56,9 +58,11 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 	 */
 	public function stop() {
 		if ($this->isStarted()) {
+			$this->getLogger()->info('service stopping ...');
 			$this->doStop();
 			$this->started = false;
 			$this->stopped = true;
+			$this->getLogger()->info('service stopped');
 		}
 	}
 	
@@ -102,6 +106,9 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 	}
 	
 	public function setLogger(LoggerInterface $logger) {
+		if ($this->getLogger() === $logger) {
+			throw new \LogicException('set same logger instance');
+		}
 		$this->logger = $logger;
 	}
 }

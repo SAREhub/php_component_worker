@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use SAREhub\Component\Worker\Service\ServiceSupport;
 
 class TestServiceSupport extends ServiceSupport {
@@ -109,6 +110,13 @@ class ServiceSupportTest extends TestCase {
 		$spy = $this->getMethodSpy('doTick');
 		$this->service->tick();
 		$this->assertFalse($spy->hasBeenInvoked());
+	}
+	
+	public function testSetLoggerWhenSetsAndSetSameThenException() {
+		$logger = new NullLogger();
+		$this->service->setLogger($logger);
+		$this->expectException(\LogicException::class);
+		$this->service->setLogger($logger);
 	}
 	
 	private function getMethodSpy($method) {
