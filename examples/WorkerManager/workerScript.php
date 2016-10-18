@@ -62,7 +62,6 @@ $runner = WorkerRunner::newInstance()
 	->withPublishTopic('worker.command.reply')
   );
 	
-	$logger->info("init");
 $runner->getWorker()->setLogger($logger);
 $runner->setLogger($logger);
 $runner->start();

@@ -5,6 +5,7 @@ use Monolog\Logger;
 use SAREhub\Commons\Misc\Dsn;
 use SAREhub\Commons\Zmq\PublishSubscribe\Publisher;
 use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
+use SAREhub\Component\Worker\Command\CommandService;
 use SAREhub\Component\Worker\Command\JsonCommandFormat;
 use SAREhub\Component\Worker\Command\ZmqCommandOutput;
 use SAREhub\Component\Worker\Command\ZmqCommandReplyInput;
@@ -21,9 +22,8 @@ $workerProcessService = WorkerProcessService::newInstance()
   ->withWorkerProcessFactory(WorkerProcessFactory::newInstance()
 	->withRunnerScriptPath(__DIR__.'/workerScript.php'));
 
-
 $zmqContext = new ZMQContext();
-$workerCommandService = WorkerCommandService::newInstance()
+$workerCommandService = CommandService::newInstance()
   ->withCommandOutput(ZmqCommandOutput::newInstance()
 	->withPublisher(Publisher::inContext($zmqContext)
 	  ->bind(Dsn::tcp()->endpoint('127.0.0.1:30001'))
