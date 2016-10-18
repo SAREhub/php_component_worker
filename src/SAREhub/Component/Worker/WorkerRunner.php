@@ -2,6 +2,7 @@
 
 namespace SAREhub\Component\Worker;
 
+use SAREhub\Commons\Process\PcntlSignals;
 use SAREhub\Component\Worker\Command\Command;
 use SAREhub\Component\Worker\Command\CommandInput;
 use SAREhub\Component\Worker\Command\CommandReply;
@@ -23,9 +24,18 @@ class WorkerRunner extends ServiceSupport {
 	 */
 	private $commandInput;
 	
+	/**
+	 * @var CommandReplyOutput
+	 */
 	private $commandReplyOutput;
 	
+	/**
+	 * @var PcntlSignals
+	 */
+	private $signals;
+	
 	protected function __construct() {
+		$this->signals = new PcntlSignals();
 	}
 	
 	/**
@@ -62,6 +72,20 @@ class WorkerRunner extends ServiceSupport {
 		return $this;
 	}
 	
+	/**
+	 * Use for handle system signals. For works you must install signals, after it.
+	 * @param PcntlSignals|null $signals the signals handler. When null will use Global handler
+	 * @param bool $install When true will install signals.
+	 * @return $this
+	 */
+	public function usePcntl(PcntlSignals $signals = null, $install = true) {
+		$this->signals = ($signals) ? $signals : PcntlSignals::getGlobal();
+		$this->signals->handle(PcntlSignals::SIGINT, array($this, 'stop'));
+		if ($install) {
+			$this->signals->install();
+		}
+		return $this;
+	}
 	
 	/**
 	 * Contains custom worker start logic
@@ -86,6 +110,8 @@ class WorkerRunner extends ServiceSupport {
 		} catch (\Exception $e) {
 			$this->getLogger()->error($e);
 		}
+		
+		$this->getPcntlSignals()->checkPendingSignals();
 	}
 	
 	private function checkCommand() {
@@ -172,5 +198,12 @@ class WorkerRunner extends ServiceSupport {
 	 */
 	public function getCommandReplyOutput() {
 		return $this->commandReplyOutput;
+	}
+	
+	/**
+	 * @return PcntlSignals
+	 */
+	public function getPcntlSignals() {
+		return $this->signals;
 	}
 }

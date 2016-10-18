@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use SAREhub\Commons\Process\PcntlSignals;
 use SAREhub\Component\Worker\Command\BasicCommand;
 use SAREhub\Component\Worker\Command\CommandInput;
 use SAREhub\Component\Worker\Command\CommandReply;
@@ -63,6 +64,39 @@ class WorkerRunnerTest extends TestCase {
 			  return $reply->getMessage() === 'exception when execute command';
 		  }));
 		$this->workerRunner->tick();
+	}
+	
+	public function testTickThenCheckPendingSignals() {
+		echo extension_loaded('pcntl');
+		$signals = $this->createMock(PcntlSignals::class);
+		$signals->expects($this->once())->method('checkPendingSignals');
+		$this->workerRunner->usePcntl($signals);
+		$this->workerRunner->tick();
+		var_dump($signals === $this->workerRunner->getPcntlSignals());
+	}
+	
+	public function testUsePcntlThenHandleSIGINT() {
+		$runner = $this->workerRunner;
+		$signals = $this->createMock(PcntlSignals::class);
+		$signals->expects($this->once())->method('handle')
+		  ->with(PcntlSignals::SIGINT, $this->callback(function (array $callback) use ($runner) {
+			  return $callback[0] === $runner && $callback[1] === 'stop';
+		  }));
+		$runner->usePcntl($signals);
+	}
+	
+	public function testUsePcntlWhenInstallTrueThenInstall() {
+		$runner = $this->workerRunner;
+		$signals = $this->createMock(PcntlSignals::class);
+		$signals->expects($this->once())->method('install');
+		$runner->usePcntl($signals);
+	}
+	
+	public function testUsePcntlWhenInstallFalseThenInstall() {
+		$runner = $this->workerRunner;
+		$signals = $this->createMock(PcntlSignals::class);
+		$signals->expects($this->never())->method('install');
+		$runner->usePcntl($signals, false);
 	}
 	
 	protected function setUp() {
