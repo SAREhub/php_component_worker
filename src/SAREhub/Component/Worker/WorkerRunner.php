@@ -81,6 +81,7 @@ class WorkerRunner extends ServiceSupport {
 	public function usePcntl(PcntlSignals $signals = null, $install = true) {
 		$this->signals = ($signals) ? $signals : PcntlSignals::getGlobal();
 		$this->signals->handle(PcntlSignals::SIGINT, array($this, 'stop'));
+		$this->signals->handle(PcntlSignals::SIGTERM, array($this, 'stop'));
 		if ($install) {
 			$this->signals->install();
 		}

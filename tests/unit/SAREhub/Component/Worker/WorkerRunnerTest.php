@@ -79,13 +79,18 @@ class WorkerRunnerTest extends TestCase {
 		$this->workerRunner->tick();
 	}
 	
-	public function testUsePcntlThenHandleSIGINT() {
+	public function testUsePcntlThenHandleSIGINT_AND_SIGTERM() {
 		$runner = $this->workerRunner;
 		$signals = $this->createMock(PcntlSignals::class);
-		$signals->expects($this->once())->method('handle')
-		  ->with(PcntlSignals::SIGINT, $this->callback(function (array $callback) use ($runner) {
+		$signals->expects($this->atLeast(2))->method('handle')
+		  ->withConsecutive([
+			PcntlSignals::SIGINT, $this->callback(function (array $callback) use ($runner) {
 			  return $callback[0] === $runner && $callback[1] === 'stop';
-		  }));
+			})], [
+			PcntlSignals::SIGTERM, $this->callback(function (array $callback) use ($runner) {
+				return $callback[0] === $runner && $callback[1] === 'stop';
+			})
+		  ]);
 		$runner->usePcntl($signals);
 	}
 	
