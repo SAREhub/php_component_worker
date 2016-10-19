@@ -27,6 +27,7 @@ class Cli {
 	 * @var Parameters
 	 */
 	private $config;
+	private $loggerFactory;
 	
 	public static function newInstance() {
 		return new self();
@@ -68,6 +69,15 @@ class Cli {
 		return $this;
 	}
 	
+	/**
+	 * @param callable $factory
+	 * @return $this
+	 */
+	public function withLoggerFactory(callable $factory) {
+		$this->loggerFactory = $factory;
+		return $this;
+	}
+ 	
 	public function run() {
 		$this->getCommandService()->start();
 		$this->getApplication()->run();
@@ -76,9 +86,14 @@ class Cli {
 	
 	public function registerCommand(CliCommand $command) {
 		$command->withCli($this);
+		$command->setLogger($this->getCommandLogger($command));
 		$this->getApplication()->add($command);
 		
 		return $this;
+	}
+	
+	private function getCommandLogger(CliCommand $command) {
+		return ($this->loggerFactory)($command->getName());
 	}
 	
 	/**

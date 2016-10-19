@@ -41,51 +41,42 @@ class StartManagerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteWhenConfigFileNotExistsThenPrint() {
-		$this->commandTester->execute(['-c' => 'file']);
+		$this->commandTester->execute(['-m' => 'file']);
 		$output = $this->commandTester->getDisplay();
 		$this->assertContains("config file isn't exists", $output);
 	}
 	
 	public function testExecuteWhenNoConfigThenSystemdStartNotCall() {
 		$this->systemdHelper->expects($this->never())->method('start');
-		$this->commandTester->execute(['-c' => 'file']);
+		$this->commandTester->execute(['-m' => 'file']);
 	}
 	
 	public function testExecuteWhenConfigThenSystemdStart() {
-		$this->vfsRoot->addChild(vfsStream::newFile('config.php'));
-		$this->systemdHelper->method('escape')->willReturn('escapped');
-		$this->systemdHelper->expects($this->once())->method('start')->with('worker-manager@escapped');
-		$this->commandTester->execute(['-c' => 'config.php']);
-	}
-	
-	public function testExecuteWhenConfigThenCallSystemdEscape() {
-		$this->vfsRoot->addChild(vfsStream::newFile('config.php'));
-		$this->systemdHelper->expects($this->once())->method('escape')
-		  ->with('config.php');
-		$this->commandTester->execute(['-c' => 'config.php']);
+		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
+		$this->systemdHelper->expects($this->once())->method('start')->with('worker-manager@manager.service');
+		$this->commandTester->execute(['-m' => 'manager']);
 	}
 	
 	public function testExecuteWhenConfigThenOutputStarting() {
-		$this->vfsRoot->addChild(vfsStream::newFile('config.php'));
-		$this->commandTester->execute(['-c' => 'config.php']);
+		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
+		$this->commandTester->execute(['-m' => 'manager']);
 		
-		$configPath = $this->vfsRoot->url().'/config.php';
+		$configPath = $this->vfsRoot->url().'/manager.php';
 		$output = $this->commandTester->getDisplay();
 		$this->assertContains("starting manager with config: ".$configPath, $output);
 	}
 	
 	public function testExecuteWhenConfigThenOutputUnitInstanceName() {
-		$this->vfsRoot->addChild(vfsStream::newFile('config.php'));
-		$this->systemdHelper->method('escape')->willReturn('escapped');
-		$this->commandTester->execute(['-c' => 'config.php']);
+		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
+		$this->commandTester->execute(['-m' => 'manager']);
 		$output = $this->commandTester->getDisplay();
-		$this->assertContains("manager instance unit name: worker-manager@escapped", $output);
+		$this->assertContains("manager instance unit name: worker-manager@manager.service", $output);
 	}
 	
 	public function testExecuteWhenConfigThenOutputSystemdStart() {
-		$this->vfsRoot->addChild(vfsStream::newFile('config.php'));
+		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
 		$this->systemdHelper->method('start')->willReturn('systemd_start');
-		$this->commandTester->execute(['-c' => 'config.php']);
+		$this->commandTester->execute(['-m' => 'manager']);
 		$output = $this->commandTester->getDisplay();
 		$this->assertContains("systemd start output: systemd_start", $output);
 	}

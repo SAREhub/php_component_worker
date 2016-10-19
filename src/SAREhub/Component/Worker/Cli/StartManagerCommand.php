@@ -33,21 +33,21 @@ class StartManagerCommand extends CliCommand {
 	
 	protected function configure() {
 		$this->setName('start-manager')
-		  ->setDescription('Starts new worker manager with selected config')
+		  ->setDescription('Starts selected worker manager')
 		  ->setHelp("Starts worker manager with config from file. Check example config: cli/workerManagerConfigExample.php ")
 		  ->setDefinition(new InputDefinition([
-			new InputOption('config', 'c', InputOption::VALUE_REQUIRED, 'path to manager config file')
+		    new InputOption('manager', 'm', InputOption::VALUE_REQUIRED, 'manager id')
 		  ]));
 	}
 	
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$configFile = $input->getOption('config');
-		$configPath = $this->getConfigPath($configFile);
+		$managerId = $input->getOption('manager');
+		$configPath = $this->getConfigPath($managerId);
 		if ($this->isConfigExists($configPath)) {
 			$this->getLogger()->info('starting manager with config ', ['config' => $configPath]);
 			$output->writeln('starting manager with config: '.$configPath);
 			
-			$unitName = $this->getManagerUnitInstanceName($configFile);
+			$unitName = $this->getManagerUnitInstanceName($managerId);
 			$this->getLogger()->info('manager unit instance name: ', ['unit' => $unitName]);
 			$output->writeln('manager instance unit name: '.$unitName);
 			
@@ -63,15 +63,14 @@ class StartManagerCommand extends CliCommand {
 	
 	private function getConfigPath($configFile) {
 		$configRootPath = $this->getCliConfig()->getRequiredAsMap('manager')->getRequired('configRootPath');
-		return $configRootPath.'/'.$configFile;
+		return $configRootPath.'/'.$configFile.'.php';
 	}
 	
 	private function isConfigExists($configPath) {
 		return file_exists($configPath);
 	}
 	
-	private function getManagerUnitInstanceName($configFile) {
-		$escappedFile = $this->systemdHelper->escape($configFile);
-		return 'worker-manager@'.$escappedFile;
+	private function getManagerUnitInstanceName($managerId) {
+		return 'worker-manager@'.$managerId.'.service';
 	}
 }
