@@ -2,11 +2,10 @@
 
 namespace SAREhub\Component\Worker\Service;
 
-use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-abstract class ServiceSupport implements Service, LoggerAwareInterface {
+abstract class ServiceSupport implements Service {
 	
 	/**
 	 * @var LoggerInterface
@@ -21,36 +20,33 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 	 * @throws \Exception When something was wrong.
 	 */
 	public function start() {
-		if (!$this->isStarted()) {
-			$this->getLogger()->info('service starting ...');
-			$this->doStart();
-			$this->started = true;
-			$this->stopped = false;
-			$this->getLogger()->info('service started');
+		try {
+			if (!$this->isStarted()) {
+				$this->getLogger()->info('service starting ...');
+				$this->doStart();
+				$this->started = true;
+				$this->stopped = false;
+				$this->getLogger()->info('service started');
+			}
+		} catch (\Exception $e) {
+			$this->getLogger()->error($e);
 		}
 	}
-	
-	/**
-	 * Contains custom worker start logic
-	 * @throws \Exception When something was wrong.
-	 */
-	protected abstract function doStart();
 	
 	/**
 	 * Executed on every service tick.
 	 * @throws \Exception When something was wrong.
 	 */
 	public function tick() {
-		if ($this->isRunning()) {
-			$this->doTick();
+		try {
+			if ($this->isRunning()) {
+				$this->doTick();
+			}
+		} catch (\Exception $e) {
+			$this->getLogger()->error($e);
+			$this->stop();
 		}
 	}
-	
-	/**
-	 * Contains custom worker tick logic
-	 * @throws \Exception When something was wrong.
-	 */
-	protected abstract function doTick();
 	
 	/**
 	 * Executed for stop service
@@ -58,19 +54,18 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 	 */
 	public function stop() {
 		if ($this->isStarted()) {
-			$this->getLogger()->info('service stopping ...');
-			$this->doStop();
+			try {
+				$this->getLogger()->info('service stopping ...');
+				$this->doStop();
+			} catch (\Exception $e) {
+				$this->getLogger()->error($e);
+			}
+			
 			$this->started = false;
 			$this->stopped = true;
 			$this->getLogger()->info('service stopped');
 		}
 	}
-	
-	/**
-	 * Contains custom worker stop logic
-	 * @throws \Exception When something was wrong.
-	 */
-	protected abstract function doStop();
 	
 	/**
 	 * @return boolean
@@ -111,4 +106,22 @@ abstract class ServiceSupport implements Service, LoggerAwareInterface {
 		}
 		$this->logger = $logger;
 	}
+	
+	/**
+	 * Contains custom worker start logic
+	 * @throws \Exception When something was wrong.
+	 */
+	protected abstract function doStart();
+	
+	/**
+	 * Contains custom worker tick logic
+	 * @throws \Exception When something was wrong.
+	 */
+	protected abstract function doTick();
+	
+	/**
+	 * Contains custom worker stop logic
+	 * @throws \Exception When something was wrong.
+	 */
+	protected abstract function doStop();
 }

@@ -28,6 +28,7 @@ class WorkerRunnerTest extends TestCase {
 	}
 	
 	public function testTick() {
+		$this->workerRunner->start();
 		$this->workerMock->expects($this->once())->method('tick');
 		$this->workerRunner->tick();
 	}
@@ -41,6 +42,7 @@ class WorkerRunnerTest extends TestCase {
 	}
 	
 	public function testTickWhenCommandThenWorkerProcessCommand() {
+		$this->workerRunner->start();
 		$command = new BasicCommand('1', 'test');
 		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn($command);
 		$this->workerMock->expects($this->once())->method('processCommand')
@@ -50,12 +52,14 @@ class WorkerRunnerTest extends TestCase {
 	}
 	
 	public function testTickWhenNoCommandThenWorkerNotProcessCommand() {
+		$this->workerRunner->start();
 		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn(null);
 		$this->workerMock->expects($this->never())->method('processCommand');
 		$this->workerRunner->tick();
 	}
 	
 	public function testTickWhenProcessCommandException() {
+		$this->workerRunner->start();
 		$command = new BasicCommand('1', 'c');
 		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn($command);
 		$this->workerMock->method('processCommand')->willThrowException(new \Exception('m'));
@@ -67,6 +71,7 @@ class WorkerRunnerTest extends TestCase {
 	}
 	
 	public function testTickThenCheckPendingSignals() {
+		$this->workerRunner->start();
 		echo extension_loaded('pcntl');
 		$signals = $this->createMock(PcntlSignals::class);
 		$signals->expects($this->once())->method('checkPendingSignals');

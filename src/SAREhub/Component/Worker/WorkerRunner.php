@@ -87,30 +87,13 @@ class WorkerRunner extends ServiceSupport {
 		return $this;
 	}
 	
-	/**
-	 * Contains custom worker start logic
-	 * @throws \Exception When something was wrong.
-	 */
 	protected function doStart() {
-		try {
-			$this->getWorker()->start();
-		} catch (\Exception $e) {
-			$this->getLogger()->error($e);
-		}
+		$this->getWorker()->start();
 	}
 	
-	/**
-	 * Contains custom worker tick logic
-	 * @throws \Exception When something was wrong.
-	 */
 	protected function doTick() {
-		try {
-			$this->checkCommand();
-			$this->getWorker()->tick();
-		} catch (\Exception $e) {
-			$this->getLogger()->error($e);
-		}
-		
+		$this->checkCommand();
+		$this->getWorker()->tick();
 		$this->getPcntlSignals()->checkPendingSignals();
 	}
 	
@@ -163,20 +146,16 @@ class WorkerRunner extends ServiceSupport {
 	 * @throws \Exception When something was wrong.
 	 */
 	protected function doStop() {
-		try {
-			$this->getWorker()->stop();
-			$this->getCommandInput()->close();
-			$this->getCommandReplyOutput()->close();
-		} catch (\Exception $e) {
-			$this->getLogger()->error($e);
-		}
+		$this->getWorker()->stop();
+		$this->getCommandInput()->close();
+		$this->getCommandReplyOutput()->close();
 	}
 	
 	/**
 	 * @return bool
 	 */
 	public function isRunning() {
-		return !$this->getWorker()->isStopped();
+		return !$this->getWorker()->isStopped() && !$this->isStopped();
 	}
 	
 	/**

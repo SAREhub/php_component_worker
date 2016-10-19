@@ -13,7 +13,7 @@ class TestServiceSupport extends ServiceSupport {
 	
 	
 	protected function doTick() {
-		
+		echo "test";
 	}
 	
 	
@@ -117,6 +117,26 @@ class ServiceSupportTest extends TestCase {
 		$this->service->setLogger($logger);
 		$this->expectException(\LogicException::class);
 		$this->service->setLogger($logger);
+	}
+	
+	public function testStartWhenDoStartThrowExceptionThenNotStarted() {
+		$this->service->method('doStart')->willThrowException(new Exception('e'));
+		$this->service->start();
+		$this->assertFalse($this->service->isStarted());
+	}
+	
+	public function testStopWhenDoStopThrowExceptionThenStopped() {
+		$this->service->start();
+		$this->service->method('doStop')->willThrowException(new Exception('e'));
+		$this->service->stop();
+		$this->assertTrue($this->service->isStopped());
+	}
+	
+	public function testTickWhenDoTickThrowExceptionThenStopped() {
+		$this->service->start();
+		$this->service->method('doTick')->willThrowException(new Exception('exception'));
+		$this->service->tick();
+		$this->assertFalse($this->service->isRunning());
 	}
 	
 	private function getMethodSpy($method) {

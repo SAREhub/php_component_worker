@@ -2,7 +2,10 @@
 
 namespace SAREhub\Component\Worker\Service;
 
-interface Service {
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
+
+interface Service extends LoggerAwareInterface {
 	
 	/**
 	 * Executed for start service.
@@ -36,4 +39,9 @@ interface Service {
 	 * @return boolean
 	 */
 	public function isRunning();
+	
+	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger();
 }
