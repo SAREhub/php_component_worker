@@ -6,7 +6,7 @@ use SAREhub\Commons\Misc\Parameters;
 use SAREhub\Component\Worker\Command\CommandService;
 use Symfony\Component\Console\Application;
 
-class CliBootstrap {
+class Cli {
 	
 	/**
 	 * @var Application
@@ -75,7 +75,7 @@ class CliBootstrap {
 	}
 	
 	public function registerCommand(CliCommand $command) {
-		$command->withBootstrap($this);
+		$command->withCli($this);
 		$this->getApplication()->add($command);
 		
 		return $this;

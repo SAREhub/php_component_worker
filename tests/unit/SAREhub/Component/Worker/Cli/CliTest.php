@@ -1,17 +1,17 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use SAREhub\Component\Worker\Cli\CliBootstrap;
+use SAREhub\Component\Worker\Cli\Cli;
 use SAREhub\Component\Worker\Command\CommandService;
 use Symfony\Component\Console\Application;
 
-class CliBootstrapTest extends TestCase {
+class CliTest extends TestCase {
 	
 	private $application;
 	private $commandService;
 	
 	/**
-	 * @var CliBootstrap
+	 * @var Cli
 	 */
 	private $bootstrap;
 	
@@ -21,7 +21,7 @@ class CliBootstrapTest extends TestCase {
 		$this->application = $this->createMock(Application::class);
 		$this->commandService = $this->createMock(CommandService::class);
 		
-		$this->bootstrap = CliBootstrap::newInstance()
+		$this->bootstrap = Cli::newInstance()
 		  ->withApplication($this->application)
 		  ->withCommandService($this->commandService);
 	}
