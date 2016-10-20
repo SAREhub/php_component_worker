@@ -60,7 +60,7 @@ $runner = WorkerRunner::newInstance()
 	->withPublisher(Publisher::inContext($zmqContext)
 	  ->connect(Dsn::tcp()->endpoint('127.0.0.1:30002')))
 	->withPublishTopic('worker.command.reply')
-  );
+  )->usePcntl();
 	
 $runner->getWorker()->setLogger($logger);
 $runner->setLogger($logger);

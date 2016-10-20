@@ -3,6 +3,7 @@
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use SAREhub\Commons\Misc\Dsn;
+use SAREhub\Component\Worker\Manager\ManagerCommands;
 
 return [
   'id' => 'test',
@@ -21,15 +22,20 @@ return [
 		'endpoint' => Dsn::tcp()->endpoint('127.0.0.1:40004')
 	  ]
 	],
+    'startCommands' => [
+	  ManagerCommands::start('1', '1'),
+	  ManagerCommands::start('2', '2'),
+	  ManagerCommands::start('3', '3'),
+    ]
   
   ],
   'runner' => [
 	'commandInput' => [
-	  'topic' => 'example',
+	  'topic' => 'test',
 	  'endpoint' => Dsn::tcp()->endpoint('127.0.0.1:40001')
 	],
 	'commandReplyOutput' => [
-	  'topic' => 'example',
+	  'topic' => 'test',
 	  'endpoint' => Dsn::tcp()->endpoint('127.0.0.1:40002')
 	],
   ],

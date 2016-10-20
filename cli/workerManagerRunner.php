@@ -22,12 +22,22 @@ if (file_exists($configPath)) {
 	$config = include($configPath);
 	echo "config loaded\n";
 	$runner = WorkerManagerBootstrap::newInstance()
-	  ->withWorkerContex(WorkerContext::newInstance()
+	  ->withWorkerContext(WorkerContext::newInstance()
 		->withId($config['id'])
 		->withRootPath(getcwd())
 	  )->withConfig($config)->build();
 	
 	$runner->start();
+	if ($runner->isRunning()) {
+		$config = new Parameters($config);
+		$startCommands = $config->getRequiredAsMap('manager')->getRequired('startCommands');
+		foreach ($startCommands as $command) {
+			$runner->processCommand($command, function ($command, $reply) {
+				var_dump($command);
+				var_dump($reply);
+			});
+		}
+	}
 	while ($runner->isRunning()) {
 		$runner->tick();
 	}
