@@ -31,6 +31,8 @@ class CommandRequest {
 	 */
 	private $replyCallback;
 	
+	private $processAsync = true;
+	
 	protected function __construct() {
 		
 	}
@@ -75,6 +77,14 @@ class CommandRequest {
 	 */
 	public function withReplyCallback(callable $callback) {
 		$this->replyCallback = $callback;
+		return $this;
+	}
+	
+	/**
+	 * @return $this
+	 */
+	public function syncMode() {
+		$this->processAsync = false;
 		return $this;
 	}
 	
@@ -127,5 +137,12 @@ class CommandRequest {
 	 */
 	public function getReplyCallback() {
 		return $this->replyCallback;
+	}
+	
+	/**
+	 * @return bool
+	 */
+	public function isAsync() {
+		return $this->processAsync;
 	}
 }

@@ -56,32 +56,21 @@ class CommandService extends ServiceSupport {
 		try {
 			$this->commandOutput->send($request->getTopic(), $request->getCommand(), false);
 			$request->markAsSent(TimeProvider::get()->now());
-			$this->pendingRequests[] = $request;
+			
+			$correlationId = $request->getCommand()->getCorrelationId();
+			$this->pendingRequests[$correlationId] = $request;
+			if (!$request->isAsync()) {
+				while (isset($this->pendingRequests[$correlationId])) {
+					$this->doTick();
+				}
+			}
+			
 		} catch (\Exception $e) {
 			$this->onRequestException($request, $e);
 		}
 	}
 	
-	/**
-	 * @return CommandRequest[]
-	 */
-	public function getPendingRequests() {
-		return $this->pendingRequests;
-	}
 	
-	/**
-	 * @return CommandOutput
-	 */
-	public function getCommandOutput() {
-		return $this->commandOutput;
-	}
-	
-	/**
-	 * @return CommandReplyInput
-	 */
-	public function getCommandReplyInput() {
-		return $this->commandReplyInput;
-	}
 	
 	protected function doStart() {
 		
@@ -96,6 +85,7 @@ class CommandService extends ServiceSupport {
 				  'reply' => $reply
 				]);
 				($request->getReplyCallback())($request, $reply);
+				$this->removeRequest($request->getCommand()->getCorrelationId());
 			}
 			$this->getLogger()->info('not exists correlated command for reply', ['reply' => $reply]);
 		}
@@ -116,6 +106,7 @@ class CommandService extends ServiceSupport {
 		  ['exceptionMessage' => $exception->getMessage()]
 		);
 		($request->getReplyCallback())($request, $reply);
+		
 	}
 	
 	/**
@@ -140,7 +131,33 @@ class CommandService extends ServiceSupport {
 				  'reply timeout'
 				);
 				($request->getReplyCallback())($request, $reply);
+				$this->removeRequest($request->getCommand()->getCorrelationId());
 			}
 		}
+	}
+	
+	private function removeRequest($correlationId) {
+		unset($this->pendingRequests[$correlationId]);
+	}
+	
+	/**
+	 * @return CommandRequest[]
+	 */
+	public function getPendingRequests() {
+		return $this->pendingRequests;
+	}
+	
+	/**
+	 * @return CommandOutput
+	 */
+	public function getCommandOutput() {
+		return $this->commandOutput;
+	}
+	
+	/**
+	 * @return CommandReplyInput
+	 */
+	public function getCommandReplyInput() {
+		return $this->commandReplyInput;
 	}
 }

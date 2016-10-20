@@ -41,25 +41,25 @@ class StartManagerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteWhenConfigFileNotExistsThenPrint() {
-		$this->commandTester->execute(['-m' => 'file']);
+		$this->commandTester->execute(['manager' => 'file']);
 		$output = $this->commandTester->getDisplay();
 		$this->assertContains("config file isn't exists", $output);
 	}
 	
 	public function testExecuteWhenNoConfigThenSystemdStartNotCall() {
 		$this->systemdHelper->expects($this->never())->method('start');
-		$this->commandTester->execute(['-m' => 'file']);
+		$this->commandTester->execute(['manager' => 'file']);
 	}
 	
 	public function testExecuteWhenConfigThenSystemdStart() {
 		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
 		$this->systemdHelper->expects($this->once())->method('start')->with('worker-manager@manager.service');
-		$this->commandTester->execute(['-m' => 'manager']);
+		$this->commandTester->execute(['manager' => 'manager']);
 	}
 	
 	public function testExecuteWhenConfigThenOutputStarting() {
 		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
-		$this->commandTester->execute(['-m' => 'manager']);
+		$this->commandTester->execute(['manager' => 'manager']);
 		
 		$configPath = $this->vfsRoot->url().'/manager.php';
 		$output = $this->commandTester->getDisplay();
@@ -68,7 +68,7 @@ class StartManagerCommandTest extends TestCase {
 	
 	public function testExecuteWhenConfigThenOutputUnitInstanceName() {
 		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
-		$this->commandTester->execute(['-m' => 'manager']);
+		$this->commandTester->execute(['manager' => 'manager']);
 		$output = $this->commandTester->getDisplay();
 		$this->assertContains("manager instance unit name: worker-manager@manager.service", $output);
 	}
@@ -76,8 +76,9 @@ class StartManagerCommandTest extends TestCase {
 	public function testExecuteWhenConfigThenOutputSystemdStart() {
 		$this->vfsRoot->addChild(vfsStream::newFile('manager.php'));
 		$this->systemdHelper->method('start')->willReturn('systemd_start');
-		$this->commandTester->execute(['-m' => 'manager']);
+		$this->commandTester->execute(['manager' => 'manager']);
 		$output = $this->commandTester->getDisplay();
 		$this->assertContains("systemd start output: systemd_start", $output);
 	}
+	
 }
