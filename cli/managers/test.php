@@ -27,17 +27,6 @@ return [
 	  ManagerCommands::start('2', '2'),
 	  ManagerCommands::start('3', '3'),
     ]
-  
-  ],
-  'runner' => [
-	'commandInput' => [
-	  'topic' => 'test',
-	  'endpoint' => Dsn::tcp()->endpoint('127.0.0.1:40001')
-	],
-	'commandReplyOutput' => [
-	  'topic' => 'test',
-	  'endpoint' => Dsn::tcp()->endpoint('127.0.0.1:40002')
-	],
   ],
   'logger' => [
 	'handlers' => [
