@@ -4,7 +4,7 @@ namespace SAREhub\Component\Worker\Command;
 
 class CommandRequest {
 	
-	const DEFAULT_REPLY_TIMEOUT = 30;
+	const DEFAULT_REPLY_TIMEOUT = 10;
 	
 	/**
 	 * @var string
