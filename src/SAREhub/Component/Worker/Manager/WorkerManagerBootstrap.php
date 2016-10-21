@@ -46,7 +46,7 @@ class WorkerManagerBootstrap {
 	 * @param WorkerContext $context
 	 * @return $this
 	 */
-	public function withWorkerContex(WorkerContext $context) {
+	public function withWorkerContext(WorkerContext $context) {
 		$this->workerContext = $context;
 		return $this;
 	}
@@ -89,7 +89,7 @@ class WorkerManagerBootstrap {
 		  ->withCommandSubscriber(Subscriber::inContext($this->zmqContext)
 			->subscribe($config->getRequired('topic'))
 			->connect($config->getRequired('endpoint'))
-		  );
+		  )->withCommandFormat(JsonCommandFormat::newInstance());
 	}
 	
 	/**

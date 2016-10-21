@@ -75,7 +75,7 @@ class CommandServiceTest extends TestCase {
 	
 	public function testProcessThenPendingRequest() {
 		$this->service->process($this->request);
-		$this->assertEquals([$this->request], $this->service->getPendingRequests());
+		$this->assertEquals(['1' => $this->request], $this->service->getPendingRequests());
 	}
 	
 	public function testProcessWhenSendExceptionThenCallReplyCallbackWithErrorReply() {
@@ -97,6 +97,21 @@ class CommandServiceTest extends TestCase {
 		$this->outputMock->method('send')->willThrowException(new \Exception('m'));
 		$this->service->process($this->request);
 		$this->assertFalse($this->request->isSent());
+	}
+	
+	public function testProcessWhenNotAsyncThenWaitForReply() {
+		$this->request->syncMode();
+		$this->inputMock->expects($this->atLeast(2))->method('getNext')
+		  ->willReturnOnConsecutiveCalls(null, CommandReply::success('1', 'm'));
+		$this->service->process($this->request);
+	}
+	
+	public function testProcessWhenNotAsyncThenWaitAndCallReplyCallback() {
+		$this->request->syncMode();
+		$this->inputMock->method('getNext')
+		  ->willReturnOnConsecutiveCalls(null, CommandReply::success('1', 'm'));
+		$this->request->getReplyCallback()->expects($this->once())->method('__invoke');
+		$this->service->process($this->request);
 	}
 	
 	public function testDoTickWhenReplyThenCallReplyCallback() {
@@ -134,6 +149,27 @@ class CommandServiceTest extends TestCase {
 			  return $reply->isError();
 		  }));
 		$this->service->tick();
+	}
+	
+	public function testTickWhenRequestReplyThenRemoveRequest() {
+		$this->service->process($this->request);
+		$reply = CommandReply::success(
+		  $this->request->getCommand()->getCorrelationId(),
+		  'm'
+		);
+		
+		$this->inputMock->method('getNext')->willReturn($reply);
+		$this->service->tick();
+		$this->assertEquals([], $this->service->getPendingRequests());
+	}
+	
+	public function testTickWhenRequestReplyTimeoutThenRemoveRequest() {
+		$now = time();
+		TimeProvider::get()->freezeTime($now);
+		$this->service->process($this->request);
+		TimeProvider::get()->freezeTime($now + $this->request->getReplyTimeout());
+		$this->service->tick();
+		$this->assertEquals([], $this->service->getPendingRequests());
 	}
 	
 	public function testStopThenCommandOutputClose() {
