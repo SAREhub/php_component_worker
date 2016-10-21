@@ -8,8 +8,10 @@ use SAREhub\Commons\Zmq\PublishSubscribe\Publisher;
 use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
 use SAREhub\Component\Worker\Cli\Cli;
 use SAREhub\Component\Worker\Cli\StartManagerCommand;
+use SAREhub\Component\Worker\Cli\StartWorkerCommand;
 use SAREhub\Component\Worker\Cli\SystemdHelper;
 use SAREhub\Component\Worker\Command\CommandService;
+use SAREhub\Component\Worker\Command\JsonCommandFormat;
 use SAREhub\Component\Worker\Command\ZmqCommandOutput;
 use SAREhub\Component\Worker\Command\ZmqCommandReplyInput;
 use Symfony\Component\Console\Application;
@@ -35,13 +37,15 @@ Cli::newInstance()
 	CommandService::newInstance()
 	  ->withCommandOutput(ZmqCommandOutput::newInstance()
 		->withPublisher(Publisher::inContext($zmqContext)
-		  ->bind($commandServiceConfig->getRequiredAsMap('commandOutput')->getRequired('endpoint')))
+		  ->connect($commandServiceConfig->getRequiredAsMap('commandOutput')->getRequired('endpoint')))
+	    ->withCommandFormat(JsonCommandFormat::newInstance())
 	  )->withCommandReplyInput(ZmqCommandReplyInput::newInstance()
 		->withSubscriber(Subscriber::inContext($zmqContext)
-		  ->bind($commandServiceConfig->getRequiredAsMap('commandReplyInput')->getRequired('endpoint'))
+		  ->connect($commandServiceConfig->getRequiredAsMap('commandReplyInput')->getRequired('endpoint'))
 		  ->subscribe($commandServiceConfig->getRequiredAsMap('commandReplyInput')->getRequired('topic'))
 		)
 	  )
   )->registerCommand(StartManagerCommand::newInstance()->withSystemdHelper(new SystemdHelper()))
+  ->registerCommand(StartWorkerCommand::newInstance())
   ->run();
 

@@ -2,6 +2,8 @@
 date_default_timezone_set('Europe/Warsaw');
 
 use SAREhub\Commons\Misc\Parameters;
+use SAREhub\Component\Worker\Command\Command;
+use SAREhub\Component\Worker\Command\CommandReply;
 use SAREhub\Component\Worker\Manager\WorkerManagerBootstrap;
 use SAREhub\Component\Worker\WorkerContext;
 
@@ -21,6 +23,24 @@ if (file_exists($configPath)) {
 	echo "loading config\n";
 	$config = include($configPath);
 	echo "config loaded\n";
+	$cliCommandServiceConfig = $cliConfig->getRequiredAsMap('manager')->getRequiredAsMap('forwarders');
+	
+	$config['runner'] = [
+	  'commandInput' => [
+		'topic' => '',
+		'endpoint' => $cliCommandServiceConfig->getRequiredAsMap('commandOutput')->getRequired('output')
+	  ],
+	  'commandReplyOutput' => [
+		'topic' => 'worker-cli',
+		'endpoint' => $cliCommandServiceConfig->getRequiredAsMap('commandReplyInput')->getRequired('input')
+	  ]
+	];
+	
+	echo 'listen command on '.$config['runner']['commandInput']['endpoint']
+	  .' with topic '.$config['runner']['commandInput']['topic']."\n";
+	echo 'sending command reply on '.$config['runner']['commandReplyOutput']['endpoint']
+	  .' with topic '.$config['runner']['commandReplyOutput']['topic']."\n";
+	
 	$runner = WorkerManagerBootstrap::newInstance()
 	  ->withWorkerContext(WorkerContext::newInstance()
 		->withId($config['id'])
@@ -32,9 +52,9 @@ if (file_exists($configPath)) {
 		$config = new Parameters($config);
 		$startCommands = $config->getRequiredAsMap('manager')->getRequired('startCommands');
 		foreach ($startCommands as $command) {
-			$runner->processCommand($command, function ($command, $reply) {
-				var_dump($command);
-				var_dump($reply);
+			$runner->processCommand($command, function (Command $command, CommandReply $reply) {
+				echo $command."\n";
+				echo $reply->toJson()."\n";
 			});
 		}
 	}
