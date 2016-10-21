@@ -93,8 +93,10 @@ class WorkerRunner extends ServiceSupport {
 	}
 	
 	protected function doTick() {
-		$this->checkCommand();
-		$this->getWorker()->tick();
+		if ($this->isRunning()) {
+			$this->checkCommand();
+			$this->getWorker()->tick();
+		}
 		$this->getPcntlSignals()->checkPendingSignals();
 	}
 	
@@ -109,7 +111,7 @@ class WorkerRunner extends ServiceSupport {
 		}
 	}
 	
-	private function processCommand(Command $command, callable $replyCallback) {
+	public function processCommand(Command $command, callable $replyCallback) {
 		$this->getLogger()->info('process command', ['command' => (string)$command]);
 		try {
 			$this->onCommand($command, $replyCallback);
