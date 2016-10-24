@@ -10,6 +10,7 @@ use SAREhub\Component\Worker\Cli\Cli;
 use SAREhub\Component\Worker\Cli\StartManagerCommand;
 use SAREhub\Component\Worker\Cli\StartWorkerCommand;
 use SAREhub\Component\Worker\Cli\StopManagerCommand;
+use SAREhub\Component\Worker\Cli\StopWorkerCommand;
 use SAREhub\Component\Worker\Cli\SystemdHelper;
 use SAREhub\Component\Worker\Command\CommandService;
 use SAREhub\Component\Worker\Command\JsonCommandFormat;
@@ -49,5 +50,6 @@ Cli::newInstance()
   )->registerCommand(StartManagerCommand::newInstance()->withSystemdHelper(new SystemdHelper()))
   ->registerCommand(StartWorkerCommand::newInstance())
   ->registerCommand(StopManagerCommand::newInstance())
+  ->registerCommand(StopWorkerCommand::newInstance())
   ->run();
 
