@@ -116,18 +116,20 @@ class WorkerManager extends BasicWorker {
 	
 	protected function onStopCommand(Command $command, callable $replyCallback) {
 		$id = $command->getParameters()['id'];
-		$this->getLogger()->info('send stop command to worker', ['command' => (string)$command]);
-		$manager = $this;
-		$request = CommandRequest::newInstance()
-		  ->withTopic($id)
-		  ->withCommand(WorkerCommands::stop($command->getCorrelationId()))
-		  ->withReplyCallback(
-		    function (CommandRequest $request, CommandReply $reply) use ($manager, $replyCallback, $command) {
-				$this->getLogger()->info('got reply', ['request' => $request, 'reply' => json_encode($reply)]);
-			    $manager->getProcessService()->unregisterWorker($request->getTopic());
-			    $replyCallback($command, $reply);
-			});
-		$this->getCommandService()->process($request);
+		if (in_array($id, $this->getWorkerList())) {
+			$this->getLogger()->info('send stop command to worker', ['command' => (string)$command]);
+			$manager = $this;
+			$request = CommandRequest::newInstance()
+			  ->withTopic($id)
+			  ->withCommand(WorkerCommands::stop($command->getCorrelationId()))
+			  ->withReplyCallback(
+				function (CommandRequest $request, CommandReply $reply) use ($manager, $replyCallback, $command) {
+					$this->getLogger()->info('got reply', ['request' => $request, 'reply' => json_encode($reply)]);
+					$manager->getProcessService()->unregisterWorker($request->getTopic());
+					$replyCallback($command, $reply);
+				});
+			$this->getCommandService()->process($request);
+		}
 	}
 	
 	public function onStopAllCommand(Command $command, callable $replyCallback) {

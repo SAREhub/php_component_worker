@@ -81,6 +81,7 @@ class WorkerManagerTest extends TestCase {
 	}
 	
 	public function testStopWorkerCommandWhenReplyThenProcessServiceUnregister() {
+		$this->processServiceMock->method('getWorkerList')->willReturn(['worker1']);
 		$this->processServiceMock->expects($this->once())->method('unregisterWorker')->with('worker1');
 		$command = ManagerCommands::stop('1', 'worker1');
 		
@@ -93,9 +94,16 @@ class WorkerManagerTest extends TestCase {
 		$this->manager->processCommand($command, $this->replyCallback);
 	}
 	
+	public function testStopWorkerCommandWhenNotExistsThenNotSendCommand() {
+		$command = ManagerCommands::stop('1', 'worker2');
+		$this->commandServiceMock->expects($this->never())->method('process');
+		$this->manager->processCommand($command, $this->replyCallback);
+	}
+	
 	protected function setUp() {
 		parent::setUp();
 		$this->processServiceMock = $this->createMock(WorkerProcessService::class);
+		$this->processServiceMock->method('getWorkerList')->willReturn(['worker1']);
 		$this->commandServiceMock = $this->createMock(CommandService::class);
 		$this->manager = (new WorkerManager(WorkerContext::newInstance()))
 		  ->withProcessService($this->processServiceMock)
