@@ -25,14 +25,25 @@ class StopManagerCommand extends CliCommand {
 	
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$managerId = $input->getArgument('manager');
-		$this->getCli()->getCommandService()->process(
-		  CommandRequest::newInstance()
-			->withTopic($managerId)
-			->syncMode()
-			->withCommand(WorkerCommands::stop($this->getCli()->getSessionId()))
-			->withReplyCallback(function (CommandRequest $request, CommandReply $reply) use ($output) {
-				$output->writeln('manager reply: '.$reply->toJson());
-			})
-		);
+		if ($this->getCli()->isManagerConfigFileExists($managerId)) {
+			$request = $this->createStopCommandRequest($managerId, $output);
+			$this->getCli()->getCommandService()->process($request);
+		} else {
+			$output->writeln("manager doesn't exists");
+		}
+	}
+	
+	private function createStopCommandRequest($managerId, $output) {
+		return CommandRequest::newInstance()
+		  ->withTopic($managerId)
+		  ->syncMode()
+		  ->withCommand(WorkerCommands::stop($this->getCli()->getSessionId()))
+		  ->withReplyCallback($this->createReplyCallback($output));
+	}
+	
+	private function createReplyCallback($output) {
+		return function (CommandRequest $request, CommandReply $reply) use ($output) {
+			$output->writeln('manager reply: '.$reply->toJson());
+		};
 	}
 }

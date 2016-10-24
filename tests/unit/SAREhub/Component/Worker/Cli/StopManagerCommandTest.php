@@ -11,6 +11,7 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
 class StopManagerCommandTest extends TestCase {
+	
 	private $cli;
 	
 	/**
@@ -33,12 +34,26 @@ class StopManagerCommandTest extends TestCase {
 		$this->commandTester = new CommandTester($application->find('stop-manager'));
 	}
 	
-	public function testExecuteThenCommandServiceProcess() {
+	public function testExecuteWhenConfigNotExistsThenNotCommandServiceProcess() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(false);
+		$this->commandService->expects($this->never())->method('process');
+		$this->commandTester->execute(['manager' => 'm']);
+	}
+	
+	public function testExecuteWhenConfigNotExistsThenOutputInfo() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(false);
+		$this->commandTester->execute(['manager' => 'm']);
+		$this->assertContains("manager doesn't exists", $this->commandTester->getDisplay());
+	}
+	
+	public function testExecuteWhenConfigThenCommandServiceProcess() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->commandService->expects($this->once())->method('process');
 		$this->commandTester->execute(['manager' => 'm']);
 	}
 	
 	public function testExecuteThenCommandRequestTopicIsManagerId() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->assertCommandRequest(function (CommandRequest $request) {
 			return $request->getTopic() === 'm';
 		});
@@ -46,6 +61,7 @@ class StopManagerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteThenCommandRequestNotAsync() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->assertCommandRequest(function (CommandRequest $request) {
 			return !$request->isAsync();
 		});
@@ -53,6 +69,7 @@ class StopManagerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteThenCommandRequestCommandWorkerStop() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->assertCommandRequest(function (CommandRequest $request) {
 			return $request->getCommand()->getName() === WorkerCommands::STOP;
 		});
@@ -60,6 +77,7 @@ class StopManagerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteWhenReplyThenCommandRequestReplyCallbackOutput() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$reply = CommandReply::success('1', 'm');
 		$this->assertCommandRequest(function (CommandRequest $request) use ($reply) {
 			($request->getReplyCallback())($request, $reply);

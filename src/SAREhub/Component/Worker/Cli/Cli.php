@@ -92,6 +92,16 @@ class Cli {
 		return $this;
 	}
 	
+	public function getManagerConfigFilePath($managerId) {
+		$configRootPath = $this->getConfig()->getRequiredAsMap('manager')->getRequired('configRootPath');
+		return $configRootPath.'/'.$managerId.'.php';
+	}
+	
+	public function isManagerConfigFileExists($managerId) {
+		$filePath = $this->getManagerConfigFilePath($managerId);
+		return file_exists($filePath);
+	}
+	
 	private function getCommandLogger(CliCommand $command) {
 		return ($this->loggerFactory)($command->getName());
 	}

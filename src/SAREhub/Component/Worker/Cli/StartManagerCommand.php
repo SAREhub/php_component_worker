@@ -39,8 +39,8 @@ class StartManagerCommand extends CliCommand {
 	
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$managerId = $input->getArgument('manager');
-		$configPath = $this->getConfigPath($managerId);
-		if ($this->isConfigExists($configPath)) {
+		if ($this->getCli()->isManagerConfigFileExists($managerId)) {
+			$configPath = $this->getCli()->getManagerConfigFilePath($managerId);
 			$this->getLogger()->info('starting manager with config ', ['config' => $configPath]);
 			$output->writeln('starting manager with config: '.$configPath);
 			
@@ -56,18 +56,10 @@ class StartManagerCommand extends CliCommand {
 				$output->writeln('started');
 			}
 		} else {
+			$configPath = $this->getCli()->getManagerConfigFilePath($managerId);
 			$output->writeln("config file isn't exists");
 			$this->getLogger()->warning("config file isn't exists", ['config' => $configPath]);
 		}
-	}
-	
-	private function getConfigPath($configFile) {
-		$configRootPath = $this->getCliConfig()->getRequiredAsMap('manager')->getRequired('configRootPath');
-		return $configRootPath.'/'.$configFile.'.php';
-	}
-	
-	private function isConfigExists($configPath) {
-		return file_exists($configPath);
 	}
 	
 	private function getManagerUnitInstanceName($managerId) {
