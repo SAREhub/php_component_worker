@@ -87,7 +87,7 @@ class WorkerManagerBootstrap {
 		$config = $this->getRunnerConfig()->getRequiredAsMap('commandInput');
 		return ZmqCommandInput::newInstance()
 		  ->withCommandSubscriber(Subscriber::inContext($this->zmqContext)
-			->subscribe($config->getRequired('topic'))
+		    ->subscribe($this->getConfig()->getRequired('id'))
 			->connect($config->getRequired('endpoint'))
 		  )->withCommandFormat(JsonCommandFormat::newInstance());
 	}
