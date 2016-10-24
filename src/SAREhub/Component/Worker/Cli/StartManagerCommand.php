@@ -46,18 +46,18 @@ class StartManagerCommand extends CliCommand {
 			
 			$unitName = $this->getManagerUnitInstanceName($managerId);
 			$this->getLogger()->info('manager unit instance name: ', ['unit' => $unitName]);
-			$output->write('manager instance unit name: '.$unitName.' ');
+			$output->write('<info>manager instance unit name: </info>'.$unitName.' ');
 			
 			$return = $this->systemdHelper->start($unitName);
 			if (!empty($return)) {
 				$this->getLogger()->info('systemd start output: '.$return);
-				$output->writeln('systemd start output: '.$return);
+				$output->writeln('<error>systemd start output: </error>'.$return);
 			} else {
-				$output->writeln('started');
+				$output->writeln('<info>started</info>');
 			}
 		} else {
 			$configPath = $this->getCli()->getManagerConfigFilePath($managerId);
-			$output->writeln("config file isn't exists");
+			$output->writeln("<error>manager config file isn't exists</error>");
 			$this->getLogger()->warning("config file isn't exists", ['config' => $configPath]);
 		}
 	}

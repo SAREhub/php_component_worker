@@ -27,15 +27,19 @@ class StartWorkerCommand extends CliCommand {
 		$managerId = $input->getArgument('manager');
 		$workerId = $input->getArgument('worker');
 		
-		$this->getCli()->getCommandService()->process(
-		  CommandRequest::newInstance()
-			->withTopic($managerId)
-			->syncMode()
-			->withCommand(ManagerCommands::start($this->getCli()->getSessionId(), $workerId))
-			->withReplyCallback(function (CommandRequest $request, CommandReply $reply) use ($output) {
-				$output->writeln('manager reply: '.$reply->toJson());
-			})
-		);
+		if ($this->getCli()->isManagerConfigFileExists($managerId)) {
+			$this->getCli()->getCommandService()->process(
+			  CommandRequest::newInstance()
+				->withTopic($managerId)
+				->syncMode()
+				->withCommand(ManagerCommands::start($this->getCli()->getSessionId(), $workerId))
+				->withReplyCallback(function (CommandRequest $request, CommandReply $reply) use ($output) {
+					$output->writeln('<info>manager reply: </info>'.$reply->toJson());
+				})
+			);
+		} else {
+			$output->writeln("<error>manager isn't exists</error>");
+		}
 	}
 	
 }

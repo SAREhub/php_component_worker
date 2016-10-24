@@ -43,7 +43,7 @@ class StopManagerCommandTest extends TestCase {
 	public function testExecuteWhenConfigNotExistsThenOutputInfo() {
 		$this->cli->method('isManagerConfigFileExists')->willReturn(false);
 		$this->commandTester->execute(['manager' => 'm']);
-		$this->assertContains("manager doesn't exists", $this->commandTester->getDisplay());
+		$this->assertContains("manager isn't exists", $this->commandTester->getDisplay());
 	}
 	
 	public function testExecuteWhenConfigThenCommandServiceProcess() {

@@ -36,7 +36,7 @@ class StartManagerCommandTest extends TestCase {
 		$this->cli->method('isManagerConfigFileExists')->willReturn(false);
 		$this->commandTester->execute(['manager' => 'file']);
 		$output = $this->commandTester->getDisplay();
-		$this->assertContains("config file isn't exists", $output);
+		$this->assertContains("manager config file isn't exists", $output);
 	}
 	
 	public function testExecuteWhenNoConfigThenSystemdStartNotCall() {

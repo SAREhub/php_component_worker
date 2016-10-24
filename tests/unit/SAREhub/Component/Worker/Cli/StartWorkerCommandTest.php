@@ -34,12 +34,26 @@ class StartWorkerCommandTest extends TestCase {
 		$this->commandTester = new CommandTester($application->find('start-worker'));
 	}
 	
+	public function testExecuteWhenManagerNotExistsThenNotProcess() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(false);
+		$this->commandService->expects($this->never())->method('process');
+		$this->commandTester->execute(['manager' => 'm', 'worker' => 'w']);
+	}
+	
+	public function testExecuteWhenManagerNotExistsThenOutputError() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(false);
+		$this->commandTester->execute(['manager' => 'm', 'worker' => 'w']);
+		$this->assertContains("manager isn't exists", $this->commandTester->getDisplay());
+	}
+	
 	public function testExecuteThenCommandServiceProcess() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->commandService->expects($this->once())->method('process');
 		$this->commandTester->execute(['manager' => 'm', 'worker' => 'w']);
 	}
 	
 	public function testExecuteThenCommandRequestTopicIsManagerId() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->assertCommandRequest(function (CommandRequest $request) {
 			return $request->getTopic() === 'm';
 		});
@@ -47,6 +61,7 @@ class StartWorkerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteThenCommandRequestNotAsync() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->assertCommandRequest(function (CommandRequest $request) {
 			return !$request->isAsync();
 		});
@@ -54,6 +69,7 @@ class StartWorkerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteThenCommandRequestCommandManagerStartWorker() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$this->assertCommandRequest(function (CommandRequest $request) {
 			return $request->getCommand()->getName() === ManagerCommands::START;
 		});
@@ -61,6 +77,7 @@ class StartWorkerCommandTest extends TestCase {
 	}
 	
 	public function testExecuteWhenReplyThenCommandRequestReplyCallbackOutput() {
+		$this->cli->method('isManagerConfigFileExists')->willReturn(true);
 		$reply = CommandReply::success('1', 'm');
 		$this->assertCommandRequest(function (CommandRequest $request) use ($reply) {
 			($request->getReplyCallback())($request, $reply);

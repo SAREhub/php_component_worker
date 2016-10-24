@@ -29,7 +29,7 @@ class StopManagerCommand extends CliCommand {
 			$request = $this->createStopCommandRequest($managerId, $output);
 			$this->getCli()->getCommandService()->process($request);
 		} else {
-			$output->writeln("manager doesn't exists");
+			$output->writeln("<error>manager isn't exists</error>");
 		}
 	}
 	
@@ -41,9 +41,9 @@ class StopManagerCommand extends CliCommand {
 		  ->withReplyCallback($this->createReplyCallback($output));
 	}
 	
-	private function createReplyCallback($output) {
+	private function createReplyCallback(OutputInterface $output) {
 		return function (CommandRequest $request, CommandReply $reply) use ($output) {
-			$output->writeln('manager reply: '.$reply->toJson());
+			$output->writeln('<info>manager reply: </info>'.$reply->toJson());
 		};
 	}
 }
