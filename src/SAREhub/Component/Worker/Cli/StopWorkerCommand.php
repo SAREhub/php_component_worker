@@ -27,14 +27,19 @@ class StopWorkerCommand extends CliCommand {
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$managerId = $input->getArgument('manager');
 		$workerId = $input->getArgument('worker');
-		$this->getCli()->getCommandService()->process(
-		  CommandRequest::newInstance()
-			->withTopic($managerId)
-			->syncMode()
-			->withCommand(ManagerCommands::stop($this->getCli()->getSessionId(), $workerId))
-			->withReplyCallback(function (CommandRequest $request, CommandReply $reply) use ($output) {
-				$output->writeln('manager reply: '.$reply->toJson());
-			})
-		);
+		
+		if ($this->getCli()->isManagerConfigFileExists($managerId)) {
+			$this->getCli()->getCommandService()->process(
+			  CommandRequest::newInstance()
+				->withTopic($managerId)
+				->syncMode()
+				->withCommand(ManagerCommands::stop($this->getCli()->getSessionId(), $workerId))
+				->withReplyCallback(function (CommandRequest $request, CommandReply $reply) use ($output) {
+					$output->writeln('manager reply: '.$reply->toJson());
+				})
+			);
+		} else {
+			$output->writeln("<error>manager isn't exists</error>");
+		}
 	}
 }
