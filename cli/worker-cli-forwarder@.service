@@ -1,0 +1,11 @@
+[Unit]
+Description=Worker CLI command forwarder unit from sarehub/component_worker
+Documentation=http://packagist.org/packages/sarehub/component_worker
+
+[Service]
+Environment="WORKERCLI_FORWARDER=path_to_workerCliForwarder.php"
+ExecStart=/usr/bin/php ${WORKERCLI_FORWARDER} %I
+
+TimeoutStopSec=30
+KillMode=process
+KillSignal=SIGINT

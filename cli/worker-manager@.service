@@ -1,0 +1,12 @@
+[Unit]
+Description=Worker Manager generator unit from sarehub/component_worker
+Documentation=http://packagist.org/packages/sarehub/component_worker
+
+[Service]
+Environment="WORKERCLI_MANAGER_RUNNER=path_to_workerManagerRunner.php"
+ExecStart=/usr/bin/php ${WORKERCLI_MANAGER_RUNNER} %I
+
+TimeoutStopSec=60
+KillMode=process
+KillSignal=SIGINT
+

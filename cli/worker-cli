@@ -1,0 +1,55 @@
+#!/usr/bin/env php
+<?php
+
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use SAREhub\Commons\Misc\Parameters;
+use SAREhub\Commons\Zmq\PublishSubscribe\Publisher;
+use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
+use SAREhub\Component\Worker\Cli\Cli;
+use SAREhub\Component\Worker\Cli\StartManagerCommand;
+use SAREhub\Component\Worker\Cli\StartWorkerCommand;
+use SAREhub\Component\Worker\Cli\StopManagerCommand;
+use SAREhub\Component\Worker\Cli\StopWorkerCommand;
+use SAREhub\Component\Worker\Cli\SystemdHelper;
+use SAREhub\Component\Worker\Command\CommandService;
+use SAREhub\Component\Worker\Command\JsonCommandFormat;
+use SAREhub\Component\Worker\Command\ZmqCommandOutput;
+use SAREhub\Component\Worker\Command\ZmqCommandReplyInput;
+use Symfony\Component\Console\Application;
+
+require dirname(__DIR__).'/vendor/autoload.php';
+
+$config = new Parameters(include(__DIR__.'/config.php'));
+$commandServiceConfig = $config->getRequiredAsMap('commandService');
+
+$zmqContext = new ZMQContext();
+$sessionId = uniqid(mt_rand(10000, 100000).time());
+
+$handlers = [new StreamHandler(__DIR__.'/cliLog')];
+
+Cli::newInstance()
+  ->withApplication(new Application('Worker CLI', '0.1'))
+  ->withConfig($config)
+  ->withSessionId($sessionId)
+  ->withLoggerFactory(function ($name) use ($handlers) {
+	  return new Logger($name, $handlers);
+  })
+  ->withCommandService(
+	CommandService::newInstance()
+	  ->withCommandOutput(ZmqCommandOutput::newInstance()
+		->withPublisher(Publisher::inContext($zmqContext)
+		  ->connect($commandServiceConfig->getRequiredAsMap('commandOutput')->getRequired('endpoint')))
+	    ->withCommandFormat(JsonCommandFormat::newInstance())
+	  )->withCommandReplyInput(ZmqCommandReplyInput::newInstance()
+		->withSubscriber(Subscriber::inContext($zmqContext)
+		  ->connect($commandServiceConfig->getRequiredAsMap('commandReplyInput')->getRequired('endpoint'))
+		  ->subscribe($commandServiceConfig->getRequiredAsMap('commandReplyInput')->getRequired('topic'))
+		)
+	  )
+  )->registerCommand(StartManagerCommand::newInstance()->withSystemdHelper(new SystemdHelper()))
+  ->registerCommand(StartWorkerCommand::newInstance())
+  ->registerCommand(StopManagerCommand::newInstance())
+  ->registerCommand(StopWorkerCommand::newInstance())
+  ->run();
+
