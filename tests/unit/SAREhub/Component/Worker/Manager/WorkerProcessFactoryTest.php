@@ -22,10 +22,7 @@ class WorkerProcessFactoryTest extends TestCase {
 		$this->assertSame('id', $workerProcess->getId());
 		$process = $workerProcess->getProcess();
 		$this->assertInstanceOf(Process::class, $process);
-		$expectedCommandLine = ProcessUtils::escapeArgument('php');
-		$expectedCommandLine .= ' '.ProcessUtils::escapeArgument('runner.php');
-		$expectedCommandLine .= ' '.ProcessUtils::escapeArgument('id');
-		
+		$expectedCommandLine = $this->getCommandLine(['php', 'runner.php', 'id']);
 		$this->assertEquals($expectedCommandLine, $process->getCommandLine());
 	}
 	
@@ -46,6 +43,11 @@ class WorkerProcessFactoryTest extends TestCase {
 		
 		$workerProcess = $factory->create('id');
 		$process = $workerProcess->getProcess();
-		$this->assertEquals('"php" "runner.php" "id" "arg1" "arg2"', $process->getCommandLine());
+		$expectedCommandLine = $this->getCommandLine(['php', 'runner.php', 'id', 'arg1', 'arg2']);
+		$this->assertEquals($expectedCommandLine, $process->getCommandLine());
+	}
+	
+	private function getCommandLine(array $arguments) {
+		return implode(' ', array_map(array(ProcessUtils::class, 'escapeArgument'), $arguments));
 	}
 }
