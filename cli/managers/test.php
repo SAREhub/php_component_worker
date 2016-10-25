@@ -25,7 +25,7 @@ return [
     'startCommands' => [
 	  ManagerCommands::start('1', '1'),
 	  ManagerCommands::start('2', '2'),
-	  ManagerCommands::start('3', '3'),
+      ManagerCommands::start('3', '3')
     ]
   ],
   'logger' => [
