@@ -3,6 +3,7 @@
 use PHPUnit\Framework\TestCase;
 use SAREhub\Component\Worker\Manager\WorkerProcessFactory;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Process\ProcessUtils;
 
 class WorkerProcessFactoryTest extends TestCase {
 	
@@ -21,7 +22,11 @@ class WorkerProcessFactoryTest extends TestCase {
 		$this->assertSame('id', $workerProcess->getId());
 		$process = $workerProcess->getProcess();
 		$this->assertInstanceOf(Process::class, $process);
-		$this->assertEquals('"php" "runner.php" "id"', $process->getCommandLine());
+		$expectedCommandLine = ProcessUtils::escapeArgument('php');
+		$expectedCommandLine .= ' '.ProcessUtils::escapeArgument('runner.php');
+		$expectedCommandLine .= ' '.ProcessUtils::escapeArgument('id');
+		
+		$this->assertEquals($expectedCommandLine, $process->getCommandLine());
 	}
 	
 	public function testCreateWithCustomWorkingDirectory() {
