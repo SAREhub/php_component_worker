@@ -60,6 +60,7 @@ class ZmqWorkerRunnerBootstrap {
 	}
 	
 	/**
+	 * Creates new worker runner for worker with command input service.
 	 * @return WorkerRunner
 	 */
 	public function create() {
@@ -72,6 +73,19 @@ class ZmqWorkerRunnerBootstrap {
 		  ->withCommandReplyOutput($commandInputServiceFactory->createCommandReplyOutput());
 		$this->registerLoggers($runner);
 		return $runner;
+	}
+	
+	/**
+	 * Wrapper method for running worker runner loop.
+	 * @param WorkerRunner $runner
+	 */
+	public static function runInLoop(WorkerRunner $runner) {
+		$runner->start();
+		while ($runner->isRunning()) {
+			$runner->tick();
+		}
+		
+		$runner->stop();
 	}
 	
 	private function checkSetup() {

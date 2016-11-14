@@ -118,4 +118,23 @@ class ZmqWorkerRunnerBootstrapTest extends TestCase {
 	private function createLoggerFactory() {
 		return $this->createPartialMock(stdClass::class, ['__invoke']);
 	}
+	
+	public function testRunLoopThenStart() {
+		$runner = $this->createMock(WorkerRunner::class);
+		$runner->expects($this->once())->method('start');
+		ZmqWorkerRunnerBootstrap::runInLoop($runner);
+	}
+	
+	public function testRunLoopThenStop() {
+		$runner = $this->createMock(WorkerRunner::class);
+		$runner->expects($this->once())->method('stop');
+		ZmqWorkerRunnerBootstrap::runInLoop($runner);
+	}
+	
+	public function testRunLoopWhenRunningThenTick() {
+		$runner = $this->createMock(WorkerRunner::class);
+		$runner->method('isRunning')->willReturnOnConsecutiveCalls(true, false);
+		$runner->expects($this->once())->method('tick');
+		ZmqWorkerRunnerBootstrap::runInLoop($runner);
+	}
 }
