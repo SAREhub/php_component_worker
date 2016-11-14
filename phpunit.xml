@@ -12,8 +12,11 @@
          syntaxCheck="false"
 >
     <testsuites>
-        <testsuite name="Component Worker">
+        <testsuite name="UNIT">
             <directory suffix="Test.php">./tests/unit/</directory>
+        </testsuite>
+        <testsuite name="INTEGRATION">
+            <directory suffix="Test.php">./tests/integration/</directory>
         </testsuite>
     </testsuites>
 
