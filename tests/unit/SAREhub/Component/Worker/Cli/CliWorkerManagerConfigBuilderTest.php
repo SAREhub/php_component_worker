@@ -66,11 +66,11 @@ class CliWorkerManagerConfigBuilderTest extends TestCase {
 		$config = $this->builder->create()['manager']['commandService'];
 		$expectedConfig = [
 		  'commandOutput' => [
-			'endpoint' => Dsn::ipc()->endpoint('/path/to/zmq/managerId/commandInput')
+		    'endpoint' => Dsn::ipc()->endpoint('/path/to/zmq/managerId/commandInput.sock')
 		  ],
 		  'commandReplyInput' => [
 			'topic' => 'worker.command.reply',
-			'endpoint' => Dsn::ipc()->endpoint('/path/to/zmq/managerId/commandReplyOutput')
+		    'endpoint' => Dsn::ipc()->endpoint('/path/to/zmq/managerId/commandReplyOutput.sock')
 		  ]
 		];
 		

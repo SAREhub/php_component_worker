@@ -4,16 +4,11 @@ date_default_timezone_set('Europe/Warsaw');
 
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use SAREhub\Commons\Misc\Dsn;
-use SAREhub\Commons\Zmq\PublishSubscribe\Publisher;
-use SAREhub\Commons\Zmq\PublishSubscribe\Subscriber;
 use SAREhub\Component\Worker\BasicWorker;
 use SAREhub\Component\Worker\Command\Command;
-use SAREhub\Component\Worker\Command\JsonCommandFormat;
-use SAREhub\Component\Worker\Command\ZmqCommandInput;
-use SAREhub\Component\Worker\Command\ZmqCommandReplyOutput;
+use SAREhub\Component\Worker\Command\ZmqCommandInputServiceFactory;
 use SAREhub\Component\Worker\WorkerContext;
-use SAREhub\Component\Worker\WorkerRunner;
+use SAREhub\Component\Worker\ZmqWorkerRunnerBootstrap;
 
 require dirname(dirname(__DIR__)).'/vendor/autoload.php';
 
@@ -41,36 +36,30 @@ class TestWorker extends BasicWorker {
 	}
 }
 
-$context = WorkerContext::newInstance()
+$loggerFactory = function ($name) {
+	return new Logger($name, [new StreamHandler(__DIR__.'/log')]);
+};
+
+/** @var Logger $mainLogger */
+$mainLogger = $loggerFactory('main');
+$workerContext = WorkerContext::newInstance()
   ->withId($argv[1])
   ->withRootPath(__DIR__);
 
-$logHandler = new StreamHandler(__DIR__.'/log', Logger::DEBUG);
-$logger = new Logger('test_worker_'.$context->getId(), [$logHandler]);
 try {
-	$zmqContext = new ZMQContext();
-	$runner = WorkerRunner::newInstance()
-	  ->withWorker(new TestWorker($context))
-	  ->withCommandInput(ZmqCommandInput::newInstance()
-		->withCommandSubscriber(Subscriber::inContext($zmqContext)
-		  ->subscribe($context->getId())
-		  ->connect(Dsn::tcp()->endpoint('127.0.0.1:40003'))
+	ZmqWorkerRunnerBootstrap::runInLoop(
+	  ZmqWorkerRunnerBootstrap::newInstance()
+		->withWorker(new TestWorker($workerContext))
+		->withCommandInputServiceFactory(ZmqCommandInputServiceFactory::newInstance()
+		  ->withZmqContext(new ZMQContext())
+		  ->withEndpointPrefix('/tmp/zmq_module/test')
 		)
-		->withCommandFormat(JsonCommandFormat::newInstance()))
-	  ->withCommandReplyOutput(ZmqCommandReplyOutput::newInstance()
-		->withPublisher(Publisher::inContext($zmqContext)
-		  ->connect(Dsn::tcp()->endpoint('127.0.0.1:40004')))
-		->withPublishTopic('worker.command.reply')
-	  )->usePcntl();
-	
-	$runner->getWorker()->setLogger($logger);
-	$runner->setLogger(new Logger($logger->getName().'_runner', [$logHandler]));
-	$runner->start();
-	while ($runner->isRunning()) {
-		$runner->tick();
-	}
-	$runner->stop();
-	
-} catch (Exception $e) {
-	$logger->error($e);
+		->withLoggerFactory($loggerFactory)
+		->create()
+	);
+} catch (\Exception $e) {
+	$mainLogger->critical('Exception outside of runner in test manager worker', [
+	  'exception' => $e,
+	  'workerId' => $workerContext->getId()
+	]);
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace SAREhub\Component\Worker\Manager;
+namespace SAREhub\Component\Worker\Cli;
 
 use Monolog\Logger;
 use SAREhub\Commons\Misc\Parameters;
@@ -14,6 +14,9 @@ use SAREhub\Component\Worker\Command\ZmqCommandInput;
 use SAREhub\Component\Worker\Command\ZmqCommandOutput;
 use SAREhub\Component\Worker\Command\ZmqCommandReplyInput;
 use SAREhub\Component\Worker\Command\ZmqCommandReplyOutput;
+use SAREhub\Component\Worker\Manager\WorkerManager;
+use SAREhub\Component\Worker\Manager\WorkerProcessFactory;
+use SAREhub\Component\Worker\Manager\WorkerProcessService;
 use SAREhub\Component\Worker\WorkerContext;
 use SAREhub\Component\Worker\WorkerRunner;
 
@@ -52,11 +55,11 @@ class WorkerManagerBootstrap {
 	}
 	
 	/**
-	 * @param array $config
+	 * @param Parameters $config
 	 * @return $this
 	 */
-	public function withConfig(array $config) {
-		$this->config = new Parameters($config);
+	public function withConfig(Parameters $config) {
+		$this->config = $config;
 		return $this;
 	}
 	
@@ -154,13 +157,8 @@ class WorkerManagerBootstrap {
 	}
 	
 	private function createLogger($name) {
-		$config = $this->getLoggerConfig();
-		$logger = new Logger($this->getConfig()->getRequired('id').'_'.$name);
-		foreach ($config->getRequired('handlers') as $handler) {
-			$logger->pushHandler($handler);
-		}
-		
-		return $logger;
+		$config = $this->getLoggingConfig();
+		return new Logger($name, $config->getRequired('handlers'), $config->getRequired('processors'));
 	}
 	
 	/**
@@ -180,8 +178,8 @@ class WorkerManagerBootstrap {
 	/**
 	 * @return Parameters
 	 */
-	private function getLoggerConfig() {
-		return $this->getConfig()->getRequiredAsMap('logger');
+	private function getLoggingConfig() {
+		return $this->getConfig()->getRequiredAsMap('logging');
 	}
 	
 	private function getConfig() {

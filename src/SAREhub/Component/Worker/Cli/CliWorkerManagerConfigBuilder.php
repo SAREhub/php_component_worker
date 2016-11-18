@@ -128,11 +128,11 @@ class CliWorkerManagerConfigBuilder {
 		$zmqPath = $this->managerCommandServiceZmqRootPath.'/'.$this->id;
 		return [
 		  'commandOutput' => [
-			'endpoint' => Dsn::ipc()->endpoint($zmqPath.'/commandInput')
+		    'endpoint' => Dsn::ipc()->endpoint($zmqPath.'/commandInput.sock')
 		  ],
 		  'commandReplyInput' => [
 			'topic' => 'worker.command.reply',
-			'endpoint' => Dsn::ipc()->endpoint($zmqPath.'/commandReplyOutput')
+		    'endpoint' => Dsn::ipc()->endpoint($zmqPath.'/commandReplyOutput.sock')
 		  ]
 		];
 	}

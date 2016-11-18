@@ -76,7 +76,7 @@ class ZmqCommandInputServiceFactory implements CommandInputServiceFactory {
 	private function createSubscriber() {
 		return Subscriber::inContext($this->zmqContext)
 		  ->subscribe($this->commandInputTopic)
-		  ->connect($this->createDsn('workerCommandInput'));
+		  ->connect($this->createDsn('commandInput'));
 	}
 	
 	/**
@@ -84,7 +84,7 @@ class ZmqCommandInputServiceFactory implements CommandInputServiceFactory {
 	 */
 	private function createPublisher() {
 		return Publisher::inContext($this->zmqContext)
-		  ->connect($this->createDsn('workerCommandReplyOutput'));
+		  ->connect($this->createDsn('commandReplyOutput'));
 	}
 	
 	private function checkSetup() {
