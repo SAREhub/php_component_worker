@@ -11,10 +11,9 @@ require dirname(__DIR__).'/vendor/autoload.php';
 $type = $argv[1];
 
 $cliConfig = new Parameters(include(__DIR__.'/config.php'));
-$cliManagerConfig = $cliConfig->getRequiredAsMap('manager');
 
 $zmqContext = new ZMQContext();
-$forwarderConfig = $cliManagerConfig->getRequiredAsMap('forwarders')->getRequiredAsMap($type);
+$forwarderConfig = $cliConfig->getRequiredAsMap('forwarders')->getRequiredAsMap($type);
 
 $device = ZmqForwarderDevice::getBuilder()
   ->frontend(Subscriber::inContext($zmqContext)
