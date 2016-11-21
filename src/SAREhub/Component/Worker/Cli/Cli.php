@@ -8,6 +8,7 @@ use Symfony\Component\Console\Application;
 
 class Cli {
 	
+	const VERSION = '0.1';
 	/**
 	 * @var Application
 	 */

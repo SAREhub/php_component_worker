@@ -25,8 +25,6 @@ class ZmqWorkerRunnerBootstrapTest extends TestCase {
 		$this->commandInputServiceFactory = $this->createMock(ZmqCommandInputServiceFactory::class);
 		$this->commandInputServiceFactory->method('withCommandInputTopic')
 		  ->willReturn($this->commandInputServiceFactory);
-		$this->commandInputServiceFactory->method('withEndpointPrefix')
-		  ->willReturn($this->commandInputServiceFactory);
 		
 		$this->commandInputServiceFactory->method('createCommandInput')
 		  ->willReturn($this->createMock(CommandInput::class));
@@ -35,7 +33,6 @@ class ZmqWorkerRunnerBootstrapTest extends TestCase {
 		
 		$this->bootstrap = ZmqWorkerRunnerBootstrap::newInstance()
 		  ->withWorker($this->worker)
-		  ->withEndpointPrefix('/tmp/test')
 		  ->withCommandInputServiceFactory($this->commandInputServiceFactory);
 	}
 	
@@ -47,7 +44,6 @@ class ZmqWorkerRunnerBootstrapTest extends TestCase {
 	}
 	
 	public function testCreateThenCreateCommandReplyOutput() {
-		
 		$this->commandInputServiceFactory->expects($this->once())
 		  ->method('createCommandReplyOutput')
 		  ->willReturn($this->createMock(CommandReplyOutput::class));
@@ -63,9 +59,6 @@ class ZmqWorkerRunnerBootstrapTest extends TestCase {
 	}
 	
 	public function testCreateThenWithEndpointPrefix() {
-		$this->commandInputServiceFactory->expects($this->once())
-		  ->method('withEndpointPrefix')
-		  ->with('/tmp/test');
 		$this->bootstrap->create();
 	}
 	

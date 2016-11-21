@@ -42,15 +42,6 @@ class ZmqWorkerRunnerBootstrap {
 	}
 	
 	/**
-	 * @param $prefix
-	 * @return $this
-	 */
-	public function withEndpointPrefix($prefix) {
-		$this->endpointPrefix = $prefix;
-		return $this;
-	}
-	
-	/**
 	 * @param callable $factory
 	 * @return $this
 	 */
@@ -91,15 +82,13 @@ class ZmqWorkerRunnerBootstrap {
 	private function checkSetup() {
 		$v = Validator::notEmpty();
 		$v->setName('worker')->assert($this->worker);
-		$v->setName('endpointPrefix')->assert($this->endpointPrefix);
 		$v->setName('commandInputServiceFactory')->assert($this->commandInputServiceFactory);
 		
 	}
 	
 	private function getCommandInputServiceFactory() {
 		return $this->commandInputServiceFactory
-		  ->withCommandInputTopic($this->worker->getId())
-		  ->withEndpointPrefix($this->endpointPrefix);
+		  ->withCommandInputTopic($this->worker->getId());
 	}
 	
 	private function registerLoggers(WorkerRunner $runner) {
