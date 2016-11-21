@@ -32,6 +32,7 @@ PcntlSignals::getGlobal()
   ->handle(PcntlSignals::SIGTERM, $onStop)
   ->install();
 $device->setTimerCallback(function () use (&$canRun) {
+	usleep(100); // for save cpu
 	PcntlSignals::getGlobal()->checkPendingSignals();
 	return $canRun;
 });

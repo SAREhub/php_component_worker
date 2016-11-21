@@ -11,11 +11,11 @@ class ZmqWorkerRunnerBootstrap {
 	 * @var Worker
 	 */
 	private $worker;
+	
 	/**
 	 * @var ZmqCommandInputServiceFactory
 	 */
 	private $commandInputServiceFactory;
-	private $endpointPrefix;
 	
 	private $loggerFactory;
 	
@@ -69,11 +69,13 @@ class ZmqWorkerRunnerBootstrap {
 	/**
 	 * Wrapper method for running worker runner loop.
 	 * @param WorkerRunner $runner
+	 * @param int $usleep Amount of time for sleep in microsecounds.
 	 */
-	public static function runInLoop(WorkerRunner $runner) {
+	public static function runInLoop(WorkerRunner $runner, $usleep = 100) {
 		$runner->start();
 		while ($runner->isRunning()) {
 			$runner->tick();
+			usleep($usleep);
 		}
 		
 		$runner->stop();
