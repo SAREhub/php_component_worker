@@ -36,7 +36,7 @@ return [
   ],
   'logging' => [
 	'handlers' => [
-	  new SyslogHandler('sarehub_worker_cli', LOG_USER, Logger::INFO)
+	  new SyslogHandler('worker_cli', LOG_USER, Logger::INFO)
 	],
 	'processors' => [
 	  new PsrLogMessageProcessor()
