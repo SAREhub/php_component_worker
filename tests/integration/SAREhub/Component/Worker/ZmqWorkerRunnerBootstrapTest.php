@@ -14,7 +14,12 @@ use SAREhub\Component\Worker\ZmqWorkerRunnerBootstrap;
 class ZmqWorkerRunnerBootstrapTest extends TestCase {
 	
 	private $worker;
+	
+	/**
+	 * @var ZmqCommandInputServiceFactory
+	 */
 	private $commandInputServiceFactory;
+	
 	/**
 	 * @var ZmqWorkerRunnerBootstrap
 	 */
