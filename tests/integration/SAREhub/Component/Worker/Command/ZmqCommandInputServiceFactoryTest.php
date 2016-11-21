@@ -29,7 +29,7 @@ class ZmqCommandInputServiceFactoryTest extends TestCase {
 	
 	public function testCreateCommandInputThenSubscriberConnections() {
 		$input = $this->factory->createCommandInput();
-		$expectedConnection = Dsn::ipc()->endpoint('prefix/workerCommandInput.sock');
+		$expectedConnection = Dsn::ipc()->endpoint('prefix/commandInput.sock');
 		$expectedConnections = [(string)$expectedConnection => $expectedConnection];
 		$this->assertEquals($expectedConnections, $input->getSubscriber()->getConnections());
 	}
@@ -41,7 +41,7 @@ class ZmqCommandInputServiceFactoryTest extends TestCase {
 	
 	public function testCreateCommandReplyOutputThenPublisherConnections() {
 		$output = $this->factory->createCommandReplyOutput();
-		$expectedConnection = Dsn::ipc()->endpoint('prefix/workerCommandReplyOutput.sock');
+		$expectedConnection = Dsn::ipc()->endpoint('prefix/commandReplyOutput.sock');
 		$expectedConnections = [(string)$expectedConnection => $expectedConnection];
 		$this->assertEquals($expectedConnections, $output->getPublisher()->getConnections());
 	}

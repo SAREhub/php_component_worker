@@ -54,6 +54,7 @@ if (file_exists($configPath)) {
 	
 	while ($runner->isRunning()) {
 		$runner->tick();
+		usleep(100);
 	}
 	
 	echo "stopped\n";
