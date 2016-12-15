@@ -30,6 +30,7 @@ abstract class ServiceSupport implements Service {
 			}
 		} catch (\Exception $e) {
 			$this->getLogger()->error($e);
+			throw $e;
 		}
 	}
 	
@@ -45,6 +46,7 @@ abstract class ServiceSupport implements Service {
 		} catch (\Exception $e) {
 			$this->getLogger()->error($e);
 			$this->stop();
+			throw $e;
 		}
 	}
 	
@@ -59,11 +61,12 @@ abstract class ServiceSupport implements Service {
 				$this->doStop();
 			} catch (\Exception $e) {
 				$this->getLogger()->error($e);
+				throw $e;
+			} finally {
+				$this->started = false;
+				$this->stopped = true;
+				$this->getLogger()->info('service stopped');
 			}
-			
-			$this->started = false;
-			$this->stopped = true;
-			$this->getLogger()->info('service stopped');
 		}
 	}
 	
