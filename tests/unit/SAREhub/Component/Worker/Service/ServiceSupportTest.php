@@ -121,13 +121,16 @@ class ServiceSupportTest extends TestCase {
 	
 	public function testStartWhenDoStartThrowExceptionThenNotStarted() {
 		$this->service->method('doStart')->willThrowException(new Exception('e'));
+		$this->expectException(\Exception::class);
 		$this->service->start();
+		
 		$this->assertFalse($this->service->isStarted());
 	}
 	
 	public function testStopWhenDoStopThrowExceptionThenStopped() {
 		$this->service->start();
 		$this->service->method('doStop')->willThrowException(new Exception('e'));
+		$this->expectException(\Exception::class);
 		$this->service->stop();
 		$this->assertTrue($this->service->isStopped());
 	}
@@ -135,6 +138,7 @@ class ServiceSupportTest extends TestCase {
 	public function testTickWhenDoTickThrowExceptionThenStopped() {
 		$this->service->start();
 		$this->service->method('doTick')->willThrowException(new Exception('exception'));
+		$this->expectException(Exception::class);
 		$this->service->tick();
 		$this->assertFalse($this->service->isRunning());
 	}
