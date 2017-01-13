@@ -112,6 +112,37 @@ class ServiceSupportTest extends TestCase {
 		$this->assertFalse($spy->hasBeenInvoked());
 	}
 	
+	public function testTickWhenDoTickThrowExceptionThenThrowed() {
+		$this->service->start();
+		$this->service->method('doTick')->willThrowException(new Exception('exception'));
+		$this->expectException(\Exception::class);
+		$this->service->tick();
+	}
+	
+	public function testTickWhenDoTickThrowExceptionAndDoStopThrowExceptionThenThrowOrginalException() {
+		$this->service->start();
+		$orginalException = new Exception('exception');
+		$this->service->method('doTick')->willThrowException($orginalException);
+		$this->service->method('doStop')->willThrowException(new Exception('exception2'));
+		try {
+			$this->service->tick();
+		} catch (\Exception $e) {
+			$this->assertSame($orginalException, $e);
+		}
+	}
+	
+	public function testTickWhenDoTickThrowExceptionThenStopped() {
+		$this->service->start();
+		$this->service->method('doTick')->willThrowException(new Exception('exception'));
+		try {
+			$this->service->tick();
+		} catch (\Exception $e) {
+			$this->assertFalse($this->service->isRunning());
+		}
+	}
+	
+	
+	
 	public function testSetLoggerWhenSetsAndSetSameThenException() {
 		$logger = new NullLogger();
 		$this->service->setLogger($logger);
@@ -135,13 +166,6 @@ class ServiceSupportTest extends TestCase {
 		$this->assertTrue($this->service->isStopped());
 	}
 	
-	public function testTickWhenDoTickThrowExceptionThenStopped() {
-		$this->service->start();
-		$this->service->method('doTick')->willThrowException(new Exception('exception'));
-		$this->expectException(Exception::class);
-		$this->service->tick();
-		$this->assertFalse($this->service->isRunning());
-	}
 	
 	private function getMethodSpy($method) {
 		$this->service->expects($methodSpy = $this->any())->method($method);

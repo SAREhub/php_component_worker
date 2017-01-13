@@ -20,17 +20,12 @@ abstract class ServiceSupport implements Service {
 	 * @throws \Exception When something was wrong.
 	 */
 	public function start() {
-		try {
-			if (!$this->isStarted()) {
-				$this->getLogger()->info('service starting ...');
-				$this->doStart();
-				$this->started = true;
-				$this->stopped = false;
-				$this->getLogger()->info('service started');
-			}
-		} catch (\Exception $e) {
-			$this->getLogger()->error($e);
-			throw $e;
+		if (!$this->isStarted()) {
+			$this->getLogger()->info('service starting ...');
+			$this->doStart();
+			$this->started = true;
+			$this->stopped = false;
+			$this->getLogger()->info('service started');
 		}
 	}
 	
@@ -44,8 +39,12 @@ abstract class ServiceSupport implements Service {
 				$this->doTick();
 			}
 		} catch (\Exception $e) {
-			$this->getLogger()->error($e);
-			$this->stop();
+			try {
+				$this->stop();
+			} catch (\Exception $e2) {
+				// we wants only orginal exception
+			}
+			
 			throw $e;
 		}
 	}
@@ -59,9 +58,6 @@ abstract class ServiceSupport implements Service {
 			try {
 				$this->getLogger()->info('service stopping ...');
 				$this->doStop();
-			} catch (\Exception $e) {
-				$this->getLogger()->error($e);
-				throw $e;
 			} finally {
 				$this->started = false;
 				$this->stopped = true;
@@ -107,6 +103,7 @@ abstract class ServiceSupport implements Service {
 		if ($this->getLogger() === $logger) {
 			throw new \LogicException('set same logger instance');
 		}
+		
 		$this->logger = $logger;
 	}
 	
@@ -114,17 +111,23 @@ abstract class ServiceSupport implements Service {
 	 * Contains custom worker start logic
 	 * @throws \Exception When something was wrong.
 	 */
-	protected abstract function doStart();
+	protected function doStart() {
+		
+	}
 	
 	/**
 	 * Contains custom worker tick logic
 	 * @throws \Exception When something was wrong.
 	 */
-	protected abstract function doTick();
+	protected function doTick() {
+		
+	}
 	
 	/**
 	 * Contains custom worker stop logic
 	 * @throws \Exception When something was wrong.
 	 */
-	protected abstract function doStop();
+	protected function doStop() {
+		
+	}
 }
