@@ -11,41 +11,41 @@ use SAREhub\Component\Worker\WorkerRunner;
 class WorkerRunnerTest extends TestCase {
 	
 	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $workerMock;
+	private $worker;
 	
 	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $commandInputMock;
+	private $commandInput;
 	
 	/** @var PHPUnit_Framework_MockObject_MockObject */
-	private $commandReplyOutputMock;
+	private $commandReplyOutput;
 	
 	/** @var WorkerRunner */
 	private $workerRunner;
 	
-	public function testStart() {
-		$this->workerMock->expects($this->once())->method('start');
+	public function testStartThenWorkerStart() {
+		$this->worker->expects($this->once())->method('start');
 		$this->workerRunner->start();
 	}
 	
 	public function testTick() {
 		$this->workerRunner->start();
-		$this->workerMock->expects($this->once())->method('tick');
+		$this->worker->expects($this->once())->method('tick');
 		$this->workerRunner->tick();
 	}
 	
 	public function testStopWhenStarted() {
 		$this->workerRunner->start();
-		$this->workerMock->expects($this->once())->method('stop');
-		$this->commandInputMock->expects($this->once())->method('close');
-		$this->commandReplyOutputMock->expects($this->once())->method('close');
+		$this->worker->expects($this->once())->method('stop');
+		$this->commandInput->expects($this->once())->method('close');
+		$this->commandReplyOutput->expects($this->once())->method('close');
 		$this->workerRunner->stop();
 	}
 	
 	public function testTickWhenCommandThenWorkerProcessCommand() {
 		$this->workerRunner->start();
 		$command = new BasicCommand('1', 'test');
-		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn($command);
-		$this->workerMock->expects($this->once())->method('processCommand')
+		$this->commandInput->expects($this->once())->method('getNext')->willReturn($command);
+		$this->worker->expects($this->once())->method('processCommand')
 		  ->with($this->identicalTo($command));
 		
 		$this->workerRunner->tick();
@@ -53,17 +53,17 @@ class WorkerRunnerTest extends TestCase {
 	
 	public function testTickWhenNoCommandThenWorkerNotProcessCommand() {
 		$this->workerRunner->start();
-		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn(null);
-		$this->workerMock->expects($this->never())->method('processCommand');
+		$this->commandInput->expects($this->once())->method('getNext')->willReturn(null);
+		$this->worker->expects($this->never())->method('processCommand');
 		$this->workerRunner->tick();
 	}
 	
 	public function testTickWhenProcessCommandException() {
 		$this->workerRunner->start();
 		$command = new BasicCommand('1', 'c');
-		$this->commandInputMock->expects($this->once())->method('getNext')->willReturn($command);
-		$this->workerMock->method('processCommand')->willThrowException(new \Exception('m'));
-		$this->commandReplyOutputMock->expects($this->once())->method('send')
+		$this->commandInput->expects($this->once())->method('getNext')->willReturn($command);
+		$this->worker->method('processCommand')->willThrowException(new \Exception('m'));
+		$this->commandReplyOutput->expects($this->once())->method('send')
 		  ->with($this->callback(function (CommandReply $reply) {
 			  return $reply->getMessage() === 'exception when execute command';
 		  }));
@@ -109,12 +109,12 @@ class WorkerRunnerTest extends TestCase {
 	}
 	
 	protected function setUp() {
-		$this->workerMock = $this->createMock(SAREhub\Component\Worker\Worker::class);
-		$this->commandInputMock = $this->createMock(CommandInput::class);
-		$this->commandReplyOutputMock = $this->createMock(CommandReplyOutput::class);
+		$this->worker = $this->createMock(SAREhub\Component\Worker\Worker::class);
+		$this->commandInput = $this->createMock(CommandInput::class);
+		$this->commandReplyOutput = $this->createMock(CommandReplyOutput::class);
 		$this->workerRunner = WorkerRunner::newInstance()
-		  ->withWorker($this->workerMock)
-		  ->withCommandInput($this->commandInputMock)
-		  ->withCommandReplyOutput($this->commandReplyOutputMock);
+		  ->withWorker($this->worker)
+		  ->withCommandInput($this->commandInput)
+		  ->withCommandReplyOutput($this->commandReplyOutput);
 	}
 }
