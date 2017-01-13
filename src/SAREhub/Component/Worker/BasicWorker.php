@@ -29,8 +29,11 @@ abstract class BasicWorker extends ServiceSupport implements Worker {
 	 * Contains custom command processing logic.
 	 * @param Command $command
 	 * @throws WorkerException When something was wrong.
+	 * @deprecated
 	 */
-	protected abstract function doCommand(Command $command, callable $replyCallback);
+	protected function doCommand(Command $command, callable $replyCallback) {
+		
+	}
 	
 	public function getId() {
 		return $this->getContext()->getId();
