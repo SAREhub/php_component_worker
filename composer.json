@@ -13,16 +13,15 @@
     "phpunit/phpunit": "5.*",
     "mikey179/vfsStream": "1.6.*",
     "codeclimate/php-test-reporter": "dev-master",
-    "fig-r/psr2r-sniffer": "0.*",
-    "phpdocumentor/phpdocumentor": "2.9.*"
+    "fig-r/psr2r-sniffer": "0.*"
   },
   "require": {
     "php": "^7.0",
-    "monolog/monolog": "1.9.*",
-    "symfony/process": "3.1.3 as 2.8.9",
-    "symfony/console": "3.1.5 as 2.3.28",
+    "monolog/monolog": "1.*",
+    "symfony/process": "3.*",
+    "symfony/console": "3.*",
     "sarehub/commons": "0.5.*",
-    "respect/validation": "1.1.*"
+    "respect/validation": "1.*"
   },
   "autoload": {
     "psr-4": {
